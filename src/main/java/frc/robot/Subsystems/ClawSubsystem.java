@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Constants.CANConstants;
 import frc.robot.Constants.Constants.ClawConstants;
 
-public class ClawSubsystem extends SubsystemBase{
+public class ClawSubsystem extends SubsystemBase {
     private CANSparkMax pivotMotor = new CANSparkMax(CANConstants.kClawPivotMotor, MotorType.kBrushless);
     private CANSparkMax wheelMotor = new CANSparkMax(CANConstants.kClawWheelMotor, MotorType.kBrushless);
     private RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
@@ -62,6 +62,13 @@ public class ClawSubsystem extends SubsystemBase{
 
         while(!pivotFeedback.atSetpoint() && !isInterrupted.getAsBoolean()) {
             setMotorVoltageByPosition(pivotAngleRad);
+
+            //to not hog CPU cycles
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

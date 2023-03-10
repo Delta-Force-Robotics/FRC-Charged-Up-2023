@@ -76,6 +76,13 @@ public class ArmSubsystem extends SubsystemBase {
 
         while(!leftArmFeedback.atSetpoint() && !rightArmFeedback.atSetpoint() && !isInterrupted.getAsBoolean()) {
             setMotorVoltageByPosition(armAngleRad);
+
+            //to not hog CPU cycles
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
