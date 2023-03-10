@@ -100,6 +100,23 @@ public class Constants {
         public static final double kArmFeedBackVelocityTolerance = Math.toRadians(0); // in Radians
     }
 
+    public static final class ClawConstants {
+        public static final double kP = 0;
+        public static final double kI = 0;
+        public static final double kD = 0;
+
+        public static final double kS = 0;
+        public static final double kV = 0;
+        public static final double kA = 0;
+        public static final double kCos = 0;
+
+        public static final double kPivotMotorGearRatio = 0;
+        public static final double kPivotMotorTicksToRadians = kPivotMotorGearRatio * Math.PI * 2;
+        public static final double kPivotEncoderOffset = 0;
+        public static final double kPivotFeedbackPositionTolerance = 0;
+        public static final double kPivotFeedbackVelocityTolerance = 0;
+    }
+
     public static final class CANConstants {
         public static int kLeftArmMotor = 8;
         public static int kRightArmMotor = 9;
