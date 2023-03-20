@@ -2,13 +2,16 @@
 package frc.robot.Subsystems;
 
 import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix.sensors.MagnetFieldStrength;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.Constants.DriveConstants;
 import frc.robot.Constants.Constants.SwerveModuleConstants;
 import frc.robot.Util.PIDFController;
@@ -21,7 +24,7 @@ public class SwerveModuleCoaxial {
     public final RelativeEncoder driveEncoder;
     public final RelativeEncoder turnEncoder;
 
-    private final PIDFController turningPidController;
+    private final PIDController turningPidController;
     private final PIDFController velocityController;
     private final SimpleMotorFeedforward motorFeedforward;
 
@@ -33,7 +36,7 @@ public class SwerveModuleCoaxial {
                 boolean driveMotorReversed, boolean turnMotorReversed, int absoluteEncoderID) {
         
         this.absoluteEncoderReversed = absoluteEncoderReversed;
-        this.absoluteEncoderOffsetRad = absoluteEncoderOffset / SwerveModuleConstants.kCPRAbsoluteEncoder  * 2.0 * Math.PI;
+        this.absoluteEncoderOffsetRad = absoluteEncoderOffset;
         absoluteEncoder = new CANCoder(absoluteEncoderID);
         
         driveMotor = new CANSparkMax(driveMotorID, MotorType.kBrushless);
@@ -51,13 +54,12 @@ public class SwerveModuleCoaxial {
         turnEncoder.setPositionConversionFactor(SwerveModuleConstants.kTurningEncoderRot2Rad);
         turnEncoder.setVelocityConversionFactor(SwerveModuleConstants.kTurningEncoderRPM2RadPerSec);
 
-        turningPidController = new PIDFController(SwerveModuleConstants.kPTurning, 0, 0);
-        turningPidController.setContinuous();
-        turningPidController.setInputRange(-Math.PI, Math.PI);
+        turningPidController = new PIDController(SwerveModuleConstants.kPTurning, 0, 0);
+        turningPidController.enableContinuousInput(-Math.PI, Math.PI);
 
         velocityController = new PIDFController(DriveConstants.kPVel, DriveConstants.kIVel, DriveConstants.kDVel);
         motorFeedforward = new SimpleMotorFeedforward(DriveConstants.kS, DriveConstants.kV, DriveConstants.kA);
-
+        
         resetEncoders();
     }
 
@@ -78,11 +80,10 @@ public class SwerveModuleCoaxial {
     }
 
     public double getAbsoluteEncoderRad(){
-        double angle = absoluteEncoder.getAbsolutePosition() / SwerveModuleConstants.kCPRAbsoluteEncoder;
-        angle *= 2.0 * Math.PI;
+        double angle = Math.toRadians(absoluteEncoder.getAbsolutePosition());
         angle -= absoluteEncoderOffsetRad;
 
-        return angle * (absoluteEncoderReversed ? -1.0 : 1.0);
+        return 0;//angle * (absoluteEncoderReversed ? -1.0 : 1.0);
     }
 
     public void resetEncoders() {
@@ -95,7 +96,7 @@ public class SwerveModuleCoaxial {
     }
 
     public void setDesiredState(SwerveModuleState state) {
-        if(state.speedMetersPerSecond < 0.001) {
+        if(Math.abs(state.speedMetersPerSecond) < 0.001) {
             stop();
         }
 
@@ -103,8 +104,11 @@ public class SwerveModuleCoaxial {
 
         driveMotor.setVoltage(motorFeedforward.calculate(state.speedMetersPerSecond) + velocityController.calculate(getDriveVelocity(), state.speedMetersPerSecond));
 
-        turningPidController.setSetpoint(state.angle.getRadians());
-        turnMotor.set(turningPidController.calculate(getTurnPosition()));
+        turnMotor.set(turningPidController.calculate(getTurnPosition(), state.angle.getRadians()));
+    }
+
+    public MagnetFieldStrength getMagnetStrenght() {
+        return absoluteEncoder.getMagnetFieldStrength();
     }
 
     public void stop() {
