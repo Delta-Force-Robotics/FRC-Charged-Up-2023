@@ -38,9 +38,9 @@ public class SwerveJoystickCommand extends CommandBase {
     @Override
     public void execute() {
         SmartDashboard.putBoolean("Field Oriented", fieldOrientationFunction.get());
-        double xSpeed = xSpdFunction.get();
-        double ySpeed = ySpdFunction.get();
-        double turningSpeed = turningSpdFunction.get();
+        double xSpeed = (DriveConstants.slowMode) ? xSpdFunction.get() / 3 : xSpdFunction.get();
+        double ySpeed = (DriveConstants.slowMode) ? ySpdFunction.get() / 3 : ySpdFunction.get();
+        double turningSpeed = (DriveConstants.slowMode) ? turningSpdFunction.get() / 3 : turningSpdFunction.get();
 
         xSpeed = Math.abs(xSpeed) > OIConstants.kDeadband ? xSpeed : 0.0;
         ySpeed = Math.abs(ySpeed) > OIConstants.kDeadband ? ySpeed : 0.0;

@@ -21,13 +21,12 @@ public class Constants {
         public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;
         public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;
         public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;
-        public static double kPTurning = 0.3;
+        public static double kPTurning = 0.4;
 
         public static final double kCPRAbsoluteEncoder = 4096;
     }
 
     public static final class DriveConstants {
-
         public static final double kTrackWidth = Units.inchesToMeters(21.805);
         public static final double kWheelBase = Units.inchesToMeters(22.909);
         public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
@@ -37,8 +36,8 @@ public class Constants {
                 new Translation2d(-kWheelBase / 2, kTrackWidth / 2)
         );
 
-        public static final double kPhysicalMaxSpeedMetersPerSecond = 2;
-        public static final double kPhysicalMaxAccelMetersPerSecondSq = 2;
+        public static final double kPhysicalMaxSpeedMetersPerSecond = 5;
+        public static final double kPhysicalMaxAccelMetersPerSecondSq = 5;
         public static final double kPhysicalMaxAngSpeedRadPerSecond = Math.toRadians(180);
         public static final double kPhysicalMaxAngAccelRadPerSecondSq = Math.toRadians(180);
 
@@ -52,108 +51,119 @@ public class Constants {
         public static final int kBackLeftTurnMotorPort = 9;
         public static final int kBackRightTurnMotorPort = 4;
 
-        public static final boolean kFrontLeftAbsoluteEncoderReversed = false;
-        public static final boolean kFrontRightAbsoluteEncoderReversed = false;
-        public static final boolean kBackLeftAbsoluteEncoderReversed = false;
-        public static final boolean kBackRightAbsoluteEncoderReversed = false;
+        public static final boolean kFrontLeftAbsoluteEncoderReversed = true;
+        public static final boolean kFrontRightAbsoluteEncoderReversed = true;
+        public static final boolean kBackLeftAbsoluteEncoderReversed = true;
+        public static final boolean kBackRightAbsoluteEncoderReversed = true;
 
-        public static final double kFrontLeftAbsoluteEncoderOffset = -Math.toRadians(121.641);
-        public static final double kFrontRightAbsoluteEncoderOffset = -Math.toRadians(31.232);
-        public static final double kBackLeftAbsoluteEncoderOffset = Math.toRadians(37.354);
-        public static final double kBackRightAbsoluteEncoderOffset = Math.toRadians(60.382);
+        public static final double kFrontLeftAbsoluteEncoderOffset = Math.toRadians(58.535);
+        public static final double kFrontRightAbsoluteEncoderOffset = Math.toRadians(146.514);
+        public static final double kBackLeftAbsoluteEncoderOffset = Math.toRadians(-140.625);
+        public static final double kBackRightAbsoluteEncoderOffset = Math.toRadians(-117.598);
 
-        public static final boolean kFrontLeftDriveMotorReversed = false;
-        public static final boolean kFrontRightDriveMotorReversed = false;
-        public static final boolean kBackLeftDriveMotorReversed = false;
-        public static final boolean kBackRightDriveMotorReversed = false;
+        public static final boolean kFrontLeftDriveMotorReversed = true;
+        public static final boolean kFrontRightDriveMotorReversed = true;
+        public static final boolean kBackLeftDriveMotorReversed = true;
+        public static final boolean kBackRightDriveMotorReversed = true;
 
         public static final boolean kFrontLeftTurnMotorReversed = false;
         public static final boolean kFrontRightTurnMotorReversed = false;
         public static final boolean kBackLeftTurnMotorReversed = false;
         public static final boolean kBackRightTurnMotorReversed = false;
+
+        public static boolean kFieldCentric = true;
         
         public static final int kFrontLeftAbsoluteEncoderPort = 15;
         public static final int kFrontRightAbsoluteEncoderPort = 14;
         public static final int kBackLeftAbsoluteEncoderPort = 16;
         public static final int kBackRightAbsoluteEncoderPort = 13;
 
-        public static final double kTeleDriveMaxSpeedMetersPerSecond = 5;
-        public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 5;
+        public static final double kTeleDriveMaxSpeedMetersPerSecond = 4;
+        public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 4;
         public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = Math.toRadians(360);
         public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = Math.toRadians(360);
 
         public static final double kV = 2.6284;
         public static final double kA = 0.1677;
         public static final double kS = 0.19357;
-        public static final double kPVel = 4;
+        public static final double kPVel = 2;
         public static final double kIVel = 0;
         public static final double kDVel = 0;
 
         public static final double kPTheta = 4;
         public static final double kPX = 4;
         public static final double kPY = 4;
+
+        public static boolean slowMode = false;
     }
 
     public static final class ArmConstants {
-        public static final double kS = 0.57721;
+        public static final double kS = 0;
         public static final double kV = 0.76381;
         public static final double kA = 0.10614;
-        public static final double kCos = 0.15614;
+        public static final double kCos = 1.7;
 
-        public static final double kP = 0.94539;
-        public static final double kI = 0;
-        public static final double kD = 0.24637;
+        public static final double kP = 5.2;
+        public static final double kRetractP = 3;
+        public static final double kI = 0.2;
+        public static final double kD = 0.5;
+        public static final double kRetractD = 0.6;
+
+        public static volatile double armAngle = 0;
 
         public static final double kArmMotorGearRatio = 1.0 / 80.0;
         public static final double kArmMotorTicksToRadians = kArmMotorGearRatio * Math.PI * 2;
         public static final double kArmMotorRPMToRadiansPerSec = kArmMotorTicksToRadians / 60;
         public static final double kArmEncoderOffset = Math.toRadians(-90);
 
-        public static final double kArmFeedBackPositionTolerance = Math.toRadians(1); // in Radians
-        public static final double kArmFeedBackVelocityTolerance = Math.toRadians(1); // in Radians
+        public static final double kArmFeedBackPositionTolerance = Math.toRadians(0.3); // in Radians
+        public static final double kArmFeedBackVelocityTolerance = Math.toRadians(0.3); // in Radians
 
-        public static final double armAngleRadConeLow = Math.toRadians(-70);
-        public static final double armAngleRadCubeLow = Math.toRadians(-70);
+        public static final double kArmAngleRadConeLow = Math.toRadians(-70);
+        public static final double kArmAngleRadCubeLow = Math.toRadians(-70);
 
-        public static final double armAngleRadConeMid = Math.toRadians(-30);
-        public static final double armAngleRadCubeMid = Math.toRadians(-30);
+        public static final double kArmAngleRadConeMid = Math.toRadians(-19);
+        public static final double kArmAngleRadCubeMid = Math.toRadians(-29);
         
-        public static final double armAngleRadConeHigh = Math.toRadians(-12);
-        public static final double armAngleRadCubeHigh = Math.toRadians(-10);
+        public static final double kArmAngleRadConeHigh = Math.toRadians(-3);
+        public static final double kArmAngleRadCubeHigh = Math.toRadians(-6);
 
-        public static final double armAngleRadIntake = 0;
-        public static final double armAngleRadHome = kArmEncoderOffset;
+        public static final double kArmAngleRadIntake = Math.toRadians(-0.5);
+        public static final double kArmAngleRadHome = kArmEncoderOffset;
+
+        public static final double armAngleRadGroundIntake = Math.toRadians(-30);
 
         public static boolean isHome = true;
         public static boolean isScore = false;
     }
 
     public static final class ClawConstants {
-        public static final double kP = 0.3;
-        public static final double kI = 0;
-        public static final double kD = 0.05;
+        public static final double maxkP = -8;
+        public static final double kI = -1;
+        public static final double kD = 0.2;
 
-        public static final double kS = 0.1;
-        public static final double kV = 0.44151;
-        public static final double kA = 0.040624;
-        public static final double kCos = 1.8869;
+        public static final double kS = 0.4;
+        public static final double kV = 0;
+        public static final double kA = 0;
+        public static final double kCos = 2.5;
 
-        public static final double kPivotMotorGearRatio = 1 / 20.0;
+        public static final double kPivotMotorGearRatio = 1 / 60.0;
         public static final double kPivotMotorTicksToRadians = kPivotMotorGearRatio * Math.PI * 2;
         public static final double kPivotMotorRPMToRadiansPerSecond = kPivotMotorTicksToRadians / 60;
         public static final double kPivotEncoderOffset = Math.toRadians(45);
 
-        public static final double kPivotFeedbackPositionTolerance = Math.toRadians(4);
-        public static final double kPivotFeedbackVelocityTolerance = Math.toRadians(4);
+        public static final double kPivotFeedbackPositionTolerance = Math.toRadians(0.5);
+        public static final double kPivotFeedbackVelocityTolerance = Math.toRadians(0.5);
 
-        public static final double clawAngleRadScoreCube = Math.toRadians(30);
-        public static final double clawAngleRadScoreCone = Math.toRadians(45);
-        public static final double clawAngleRadIntake = Math.toRadians(0);
+        public static final double kClawAngleRadScoreCube = Math.toRadians(35);
+        public static final double kClawAngleRadScoreCone = Math.toRadians(64);
+        public static final double kClawAngleRadIntake = Math.toRadians(10);
+        public static final double kClawAngleRadGroundIntake = Math.toRadians(-90);
 
         public static final double kAngleRadHome = kPivotEncoderOffset;
     }
 
-    public static final class CANConstants {
+    public static final class CANConstants {                                                                                                                                                                              
         public static int kLeftArmMotor = 7;
         public static int kRightArmMotor = 6;
         public static int kClawPivotMotor = 17;

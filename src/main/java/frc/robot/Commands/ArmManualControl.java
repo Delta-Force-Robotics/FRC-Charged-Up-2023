@@ -21,7 +21,7 @@ public class ArmManualControl extends CommandBase {
 
     @Override
     public void execute() {
-        if(Math.abs(rightTrigger.getAsDouble() - leftTrigger.getAsDouble()) >= 0.15) {
+        if(Math.abs(rightTrigger.getAsDouble() - leftTrigger.getAsDouble()) >= 0.1) {
             armSubsystem.setMotorPower(rightTrigger.getAsDouble() - leftTrigger.getAsDouble());
         }
         else {

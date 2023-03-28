@@ -24,6 +24,7 @@ public class ArmSubsystem extends SubsystemBase {
     private BooleanSupplier isInterrupted;
     private ArmPosition desiredArmPosition = ArmPosition.HOME;
     private ArmPosition currArmPosition = ArmPosition.HOME;
+    private double setPoint = ArmConstants.kArmEncoderOffset;
 
     public ArmSubsystem() {
         leftMotor.setInverted(false);
@@ -45,7 +46,6 @@ public class ArmSubsystem extends SubsystemBase {
                 ArmConstants.kArmFeedBackVelocityTolerance);
         leftArmFeedback.setTolerance(ArmConstants.kArmFeedBackPositionTolerance,
                 ArmConstants.kArmFeedBackVelocityTolerance);
-
     }
 
     public void setInterruptedCondition(BooleanSupplier isInterrupted) {
@@ -56,23 +56,45 @@ public class ArmSubsystem extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("Left Arm Position", Math.toDegrees(leftEncoder.getPosition()));
         SmartDashboard.putNumber("Right Arm Position", Math.toDegrees(rightEncoder.getPosition()));
-        SmartDashboard.putNumber("Arm Target Position", leftArmFeedback.getSetpoint());
+        SmartDashboard.putNumber("Arm Target Position", Math.toDegrees(setPoint));
+        SmartDashboard.putNumber("Motor Power", leftMotor.getAppliedOutput());
+        
+        ArmConstants.armAngle = leftEncoder.getPosition();
+        setMotorVoltageByPosition(setPoint);
     }
 
     public double[] getPosition() {
         return new double[] { leftEncoder.getPosition(), rightEncoder.getPosition() };
     }
 
+    public double getSetPoint() {
+        return setPoint;
+    }
+
     public void setSetpoint(double armAngleRad) {
-        leftArmFeedback.setSetpoint(armAngleRad);
-        rightArmFeedback.setSetpoint(armAngleRad);
+        if(setPoint - armAngleRad >= 0) {
+            leftArmFeedback.setP(ArmConstants.kRetractP);
+            rightArmFeedback.setP(ArmConstants.kRetractP);
+
+            leftArmFeedback.setD(ArmConstants.kRetractD);
+            rightArmFeedback.setD(ArmConstants.kRetractD);
+        }
+        else {
+            leftArmFeedback.setP(ArmConstants.kP);
+            rightArmFeedback.setP(ArmConstants.kP);
+
+            leftArmFeedback.setD(ArmConstants.kD);
+            rightArmFeedback.setD(ArmConstants.kD);
+        }
+
+        setPoint = armAngleRad;
     }
 
     public void setMotorVoltageByPosition(double armAngleRad) {
         leftMotor.setVoltage(
-                armFeedforward.calculate(armAngleRad, 0) + leftArmFeedback.calculate(leftEncoder.getPosition()));
+                armFeedforward.calculate(armAngleRad, 0) + leftArmFeedback.calculate(leftEncoder.getPosition(), armAngleRad));
         rightMotor.setVoltage(
-                armFeedforward.calculate(armAngleRad, 0) + rightArmFeedback.calculate(rightEncoder.getPosition()));
+                armFeedforward.calculate(armAngleRad, 0) + rightArmFeedback.calculate(rightEncoder.getPosition(), armAngleRad));
     }
 
     public double getArmPosition() {
@@ -88,22 +110,9 @@ public class ArmSubsystem extends SubsystemBase {
         rightMotor.set(motorPower);
     }
 
-    public void goToPosition(double armAngleRad) throws InterruptedException {
-        setSetpoint(armAngleRad);
-
-        setMotorVoltageByPosition(armAngleRad);
-        while (!leftArmFeedback.atSetpoint() && !rightArmFeedback.atSetpoint()) {
-            setMotorVoltageByPosition(armAngleRad);
-
-            // to not hog CPU cycles
-            Thread.sleep(15);
-        }
-
-        ArmConstants.isHome = (armAngleRad == ArmConstants.armAngleRadHome);
-    }
-
-    public boolean getIsHome() {
-        return ArmConstants.isHome;
+    public void setMotorVoltage(double motorVoltage) {
+        leftMotor.setVoltage(motorVoltage);
+        rightMotor.setVoltage(motorVoltage);
     }
 
     public ArmPosition getDesiredArmPosition() {

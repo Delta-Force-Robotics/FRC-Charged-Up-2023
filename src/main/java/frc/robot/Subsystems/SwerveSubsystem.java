@@ -1,7 +1,10 @@
 package frc.robot.Subsystems;
 
 import com.kauailabs.navx.frc.AHRS;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -11,6 +14,9 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Constants;
 import frc.robot.Constants.Constants.DriveConstants;
@@ -62,9 +68,13 @@ public class SwerveSubsystem extends SubsystemBase {
     private SwerveDriveOdometry kSwerveDriveOdometry = new SwerveDriveOdometry(Constants.DriveConstants.kDriveKinematics, new Rotation2d(), getModulePositions());;
 
     public SwerveSubsystem() {
+        navX.calibrate();
         new Thread(() -> {
             try {
-                Thread.sleep(10000);
+                while(navX.isCalibrating()) {
+
+                }
+
                 zeroHeading();
             } catch (Exception e) {
             }
@@ -91,6 +101,28 @@ public class SwerveSubsystem extends SubsystemBase {
         kSwerveDriveOdometry.resetPosition(getRotation2d(), getModulePositions(), pose);
     }
 
+    public Command followTrajectoryCommand(PathPlannerTrajectory traj, boolean isFirstPath) {
+        return new SequentialCommandGroup(
+             new InstantCommand(() -> {
+               // Reset odometry for the first path you run during auto
+               if(isFirstPath){
+                   this.resetOdometry(traj.getInitialHolonomicPose());
+               }
+             }),
+             new PPSwerveControllerCommand(
+                 traj, 
+                 this::getPose2d, // Pose supplier
+                 DriveConstants.kDriveKinematics, // SwerveDriveKinematics
+                 new PIDController(DriveConstants.kPX, 0, 0), // X controller. Tune these values for your robot. Leaving them 0 will only use feedforwards.
+                 new PIDController(DriveConstants.kPY, 0, 0), // Y controller (usually the same values as X controller)
+                 new PIDController(DriveConstants.kPTheta, 0, 0), // Rotation controller. Tune these values for your robot. Leaving them 0 will only use feedforwards.
+                 this::setModuleStatesAuton, // Module states consumer
+                 false, // Should the path be automatically mirrored depending on alliance color. Optional, defaults to true
+                 this // Requires this drive subsystem
+             )
+         );
+     }
+
     @Override
     public void periodic() {
         kSwerveDriveOdometry.update(getRotation2d(), getModulePositions());
@@ -101,10 +133,10 @@ public class SwerveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Back Left Module Velocity", backLeft.getDriveVelocity());
         SmartDashboard.putNumber("Back Right Module Velocity", backRight.getDriveVelocity());
         SmartDashboard.putString("Robot Location", getPose2d().getTranslation().toString());
-        SmartDashboard.putNumber("Front Left Position", frontLeft.turnEncoder.getPosition());
-        SmartDashboard.putNumber("Front Right Position", frontRight.turnEncoder.getPosition());
-        SmartDashboard.putNumber("Back Left Position", backLeft.turnEncoder.getPosition());
-        SmartDashboard.putNumber("Back Right Position", backRight.turnEncoder.getPosition());   
+        SmartDashboard.putNumber("Front Left Position", Math.toDegrees(frontLeft.getTurnPosition()));
+        SmartDashboard.putNumber("Front Right Position", Math.toDegrees(frontRight.getTurnPosition()));
+        SmartDashboard.putNumber("Back Left Position", Math.toDegrees(backLeft.getTurnPosition()));
+        SmartDashboard.putNumber("Back Right Position", Math.toDegrees(backRight.getTurnPosition()));   
         SmartDashboard.putString("Front Left MagField", frontLeft.getMagnetStrenght().name());
         SmartDashboard.putString("Front Right MagField", frontRight.getMagnetStrenght().name());
         SmartDashboard.putString("Back Left MagField", backLeft.getMagnetStrenght().name());
@@ -127,6 +159,15 @@ public class SwerveSubsystem extends SubsystemBase {
         backRight.setDesiredState(desiredStates[3]);
     }    
 
+    public void setModuleStatesAuton(SwerveModuleState[] desiredStates) {
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, DriveConstants.kPhysicalMaxSpeedMetersPerSecond);
+
+        frontLeft.setDesiredStateAuton(desiredStates[0]);
+        frontRight.setDesiredStateAuton(desiredStates[1]);
+        backLeft.setDesiredStateAuton(desiredStates[2]);
+        backRight.setDesiredStateAuton(desiredStates[3]);
+    }
+
     public SwerveModulePosition[] getModulePositions() {
         return new SwerveModulePosition[] {
             new SwerveModulePosition(frontLeft.getDrivePosition(), new Rotation2d(frontLeft.getTurnPosition())),
@@ -138,5 +179,12 @@ public class SwerveSubsystem extends SubsystemBase {
 
     public void setOdometryPosition(Pose2d startLocation) {
         kSwerveDriveOdometry.resetPosition(getRotation2d(), getModulePositions(), startLocation);
+    }
+
+    public void resetEncoders() {
+        backLeft.resetEncoders();
+        backRight.resetEncoders();
+        frontLeft.resetEncoders();
+        frontRight.resetEncoders();
     }
 }

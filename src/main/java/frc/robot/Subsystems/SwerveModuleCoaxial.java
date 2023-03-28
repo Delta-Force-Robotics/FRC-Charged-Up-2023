@@ -30,7 +30,7 @@ public class SwerveModuleCoaxial {
 
     public final CANCoder absoluteEncoder;
     public final boolean absoluteEncoderReversed;
-    public final double absoluteEncoderOffsetRad;
+    public double absoluteEncoderOffsetRad;
 
     public SwerveModuleCoaxial (int driveMotorID, int turnMotorID, boolean absoluteEncoderReversed, double absoluteEncoderOffset, 
                 boolean driveMotorReversed, boolean turnMotorReversed, int absoluteEncoderID) {
@@ -56,7 +56,7 @@ public class SwerveModuleCoaxial {
 
         turningPidController = new PIDController(SwerveModuleConstants.kPTurning, 0, 0);
         turningPidController.enableContinuousInput(-Math.PI, Math.PI);
-
+        
         velocityController = new PIDFController(DriveConstants.kPVel, DriveConstants.kIVel, DriveConstants.kDVel);
         motorFeedforward = new SimpleMotorFeedforward(DriveConstants.kS, DriveConstants.kV, DriveConstants.kA);
         
@@ -80,10 +80,16 @@ public class SwerveModuleCoaxial {
     }
 
     public double getAbsoluteEncoderRad(){
-        double angle = Math.toRadians(absoluteEncoder.getAbsolutePosition());
-        angle -= absoluteEncoderOffsetRad;
+        double angle = Math.toRadians(absoluteEncoder.getAbsolutePosition()) - absoluteEncoderOffsetRad;
 
-        return 0;//angle * (absoluteEncoderReversed ? -1.0 : 1.0);
+        if(angle < -Math.PI) {
+            angle += 2 * Math.PI;
+        }
+        else if (angle > Math.PI) {
+            angle -= 2 * Math.PI;
+        }
+
+        return angle * (absoluteEncoderReversed ? -1 : 1);
     }
 
     public void resetEncoders() {
@@ -96,6 +102,18 @@ public class SwerveModuleCoaxial {
     }
 
     public void setDesiredState(SwerveModuleState state) {
+        if(Math.abs(state.speedMetersPerSecond) < 0.001) {
+            stop();
+        }
+
+        state = SwerveModuleState.optimize(state, getState().angle);
+
+        driveMotor.set(state.speedMetersPerSecond / DriveConstants.kPhysicalMaxSpeedMetersPerSecond);
+
+        turnMotor.set(turningPidController.calculate(getTurnPosition(), state.angle.getRadians()));
+    }
+
+    public void setDesiredStateAuton(SwerveModuleState state) {
         if(Math.abs(state.speedMetersPerSecond) < 0.001) {
             stop();
         }
