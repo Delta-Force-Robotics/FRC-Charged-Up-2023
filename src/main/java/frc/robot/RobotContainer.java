@@ -1,68 +1,36 @@
 package frc.robot;
 
-import java.util.List;
-import java.util.function.Consumer;
-
-import com.pathplanner.lib.PathConstraints;
-import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.commands.PPSwerveControllerCommand;
-
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.controller.HolonomicDriveController;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
-import edu.wpi.first.math.trajectory.constraint.SwerveDriveKinematicsConstraint;
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Commands.ArmManualControl;
 import frc.robot.Commands.SwerveJoystickCommand;
-import frc.robot.Constants.Constants;
-import frc.robot.Constants.Constants.ArmConstants;
-import frc.robot.Constants.Constants.ClawConstants;
 import frc.robot.Constants.Constants.DriveConstants;
+import frc.robot.Constants.Constants.ElevatorConstants;
+import frc.robot.Constants.Constants.IntakeConstants;
 import frc.robot.Constants.Constants.OIConstants;
-import frc.robot.Subsystems.ArmSubsystem;
-import frc.robot.Subsystems.ClawSubsystem;
+import frc.robot.Subsystems.ElevatorSubsystem;
+import frc.robot.Subsystems.IntakeSubsystem;
 import frc.robot.Subsystems.LimelightSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
-import frc.robot.Subsystems.ArmSubsystem.ArmPosition;
-import frc.robot.Subsystems.ClawSubsystem.GameElement;
-import frc.robot.Subsystems.ClawSubsystem.WheelDirection;
 import frc.robot.Subsystems.LimelightSubsystem.LimelightOptions.CamMode;
 import frc.robot.Subsystems.LimelightSubsystem.LimelightOptions.LEDState;
 
 public class RobotContainer {
     private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
     private final LimelightSubsystem limeLightSubsystem = new LimelightSubsystem("tx", "ty", "ta");
-    public final ClawSubsystem clawSubsystem = new ClawSubsystem();
-    public final ArmSubsystem armSubsystem = new ArmSubsystem();
+    public final ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
+    public final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
     private final Joystick driverJoystick = new Joystick(OIConstants.kDriverControllerPort);
     private final Joystick driver2Joystick = new Joystick(OIConstants.kDriver2ControllerPort);
     private boolean configured = false;
 
     private final SendableChooser autoStartSideChooser = new SendableChooser<String>();
     private final SendableChooser autoRoutineChooser = new SendableChooser<String>();
-
 
     public RobotContainer() {
         autoStartSideChooser.addOption("Blue", "BlueSide");
@@ -74,7 +42,6 @@ public class RobotContainer {
 
         SmartDashboard.putData(autoStartSideChooser);
         SmartDashboard.putData(autoRoutineChooser);
-        clawSubsystem.setSetPoint(ClawConstants.kAngleRadHome);
     }
 
     public void teleOpInit() {
@@ -91,9 +58,6 @@ public class RobotContainer {
     private void configureButtonBindings() {
         configured = true;
 
-        new JoystickButton(driverJoystick, 1)
-                .onTrue(Commands.runOnce(() -> swerveSubsystem.zeroHeading(), swerveSubsystem));
-
         new POVButton(driverJoystick, 270).onTrue(Commands.runOnce(() -> {
             if (limeLightSubsystem.currCamMode == CamMode.VISION_PROCESSOR) {
                 limeLightSubsystem.setCamMode(CamMode.DRIVER_CAMERA);
@@ -109,124 +73,169 @@ public class RobotContainer {
                 limeLightSubsystem.setLedMode(LEDState.PIPELINE);
             }
         }, limeLightSubsystem));
-
-        new JoystickButton(driver2Joystick, 5).onTrue(Commands.runOnce(() -> {
-            clawSubsystem.setCurrGameElement(GameElement.CUBE);
-        }, clawSubsystem));
-
-        new JoystickButton(driver2Joystick, 6).onTrue(Commands.runOnce(() -> {
-            clawSubsystem.setCurrGameElement(GameElement.CONE);;
-        }, clawSubsystem));
-
-        new JoystickButton(driver2Joystick, 2).onTrue(Commands.runOnce(() -> {
-            armSubsystem.setDesiredArmPosition(ArmSubsystem.ArmPosition.LOW);
-        }));
-
-        new JoystickButton(driver2Joystick, 3).onTrue(Commands.runOnce(() -> {
-            armSubsystem.setDesiredArmPosition(ArmSubsystem.ArmPosition.MID);
-        }));
-
-        new JoystickButton(driver2Joystick, 4).onTrue(Commands.runOnce(() -> {
-            armSubsystem.setDesiredArmPosition(ArmSubsystem.ArmPosition.HIGH);
-        }));
-
-        new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
-            if(ArmConstants.isHome) {
-                clawSubsystem.setSetPoint(ClawConstants.kClawAngleRadIntake);
-                clawSubsystem.setWheelDirection(ClawSubsystem.WheelDirection.INTAKE);
-    
-
-                armSubsystem.setSetpoint(ArmConstants.kArmAngleRadIntake);
-
-                ArmConstants.isScore = false;
-                ArmConstants.isHome = false;
-            }
-            else {
-                clawSubsystem.setSetPoint(Constants.ClawConstants.kPivotEncoderOffset);
-                clawSubsystem.setWheelDirection(ClawSubsystem.WheelDirection.OFF);    
-
-                armSubsystem.setSetpoint(ArmConstants.kArmAngleRadHome);
-
-                ArmConstants.isScore = false;
-                ArmConstants.isHome = true;
-            }
-        }, armSubsystem, clawSubsystem));
-
-        new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
-            if(!ArmConstants.isScore) {
-                clawSubsystem.setSetPoint(getPositionsToScore()[1]);
-                armSubsystem.setSetpoint(getPositionsToScore()[0]);
-
-                ArmConstants.isScore = true;
-                ArmConstants.isHome = false;
-            }
-            else {
-                if(clawSubsystem.getCurrGameElement() == GameElement.CONE) {
-                    clawSubsystem.setSetPoint(0);
-                    armSubsystem.setSetpoint(armSubsystem.getSetPoint() - Math.toRadians(4));
-                }
-                
-                clawSubsystem.setWheelDirection(ClawSubsystem.WheelDirection.OUTTAKE);
-                ArmConstants.isHome = false;
-            }
-        }, armSubsystem, clawSubsystem));
-
-        new JoystickButton(driverJoystick, 3).onTrue(Commands.runOnce(() -> {
-            DriveConstants.slowMode = !DriveConstants.slowMode;
-        }));
-
-        new JoystickButton(driverJoystick, 2).onTrue(Commands.runOnce(() -> {
-            armSubsystem.setSetpoint(Math.toRadians(-75));
-            new Thread(() -> {
-                try {
-                    Thread.sleep(250);
-                    clawSubsystem.setSetPoint(0);  
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }).start();
-
-            ArmConstants.isScore = false;
-            ArmConstants.isHome = false;
-            clawSubsystem.currWheelDirection = WheelDirection.INTAKE;
-        }));
-
-        new JoystickButton(driverJoystick, 4).onTrue(Commands.runOnce(() -> {
-            DriveConstants.kFieldCentric = !DriveConstants.kFieldCentric;
-        }));
     }
 
-    public double[] getPositionsToScore() {
-        if (clawSubsystem.getCurrGameElement() == GameElement.CONE) {
-            if (armSubsystem.getDesiredArmPosition() == ArmSubsystem.ArmPosition.LOW) {
-                return new double[] { Constants.ArmConstants.kArmAngleRadConeLow,
-                    0 };
-            } else if (armSubsystem.getDesiredArmPosition() == ArmSubsystem.ArmPosition.MID) {
-                return new double[] { Constants.ArmConstants.kArmAngleRadConeMid,
-                    ClawConstants.kClawAngleRadScoreCone };
-            } else {
-                return new double[] { Constants.ArmConstants.kArmAngleRadConeHigh,
-                    ClawConstants.kClawAngleRadScoreCone };
+    public Command getAutonomousCommand() {
+        if(autoStartSideChooser.getSelected() == "BlueSide") {
+            if(autoRoutineChooser.getSelected() == "AutoOpen") {
+                return new SequentialCommandGroup(new SequentialCommandGroup(Commands.runOnce(() -> {
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCone);
+
+                    double zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+                    
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                    zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kAngleRadHome);
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
+                }, elevatorSubsystem, intakeSubsystem)
+                ));
             }
-        } else {
-            if (armSubsystem.getDesiredArmPosition() == ArmSubsystem.ArmPosition.LOW) {
-                return new double[] { Constants.ArmConstants.kArmAngleRadCubeLow,
-                    ClawConstants.kClawAngleRadScoreCube };
+            else if(autoRoutineChooser.getSelected() == "AutoMid") {
+                return new SequentialCommandGroup(new SequentialCommandGroup(Commands.runOnce(() -> {
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
+
+                    double zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+                    
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                    zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kAngleRadHome);
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
+                }, elevatorSubsystem, intakeSubsystem)
+                ));
             }
-            if (armSubsystem.getDesiredArmPosition() == ArmSubsystem.ArmPosition.MID) {
-                return new double[] { Constants.ArmConstants.kArmAngleRadCubeMid,
-                    ClawConstants.kClawAngleRadScoreCube };
-            } else {
-                return new double[] { Constants.ArmConstants.kArmAngleRadCubeHigh,
-                    ClawConstants.kClawAngleRadScoreCube };
+            else {
+                return new SequentialCommandGroup(new SequentialCommandGroup(Commands.runOnce(() -> {
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCone);
+
+                    double zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+                    
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                    zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kAngleRadHome);
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
+                }, elevatorSubsystem, intakeSubsystem)
+                ));
+            }
+        }
+        else {
+            if(autoRoutineChooser.getSelected() == "AutoOpen") {
+                return new SequentialCommandGroup(new SequentialCommandGroup(Commands.runOnce(() -> {
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCone);
+
+                    double zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+                    
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                    zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kAngleRadHome);
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
+                }, elevatorSubsystem, intakeSubsystem)
+                ));
+            }
+            else if(autoRoutineChooser.getSelected() == "AutoMid") {
+                return new SequentialCommandGroup(new SequentialCommandGroup(Commands.runOnce(() -> {
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
+
+                    double zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+                    
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                    zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kAngleRadHome);
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
+                }, elevatorSubsystem, intakeSubsystem)
+                ));
+            }
+            else {
+                return new SequentialCommandGroup(new SequentialCommandGroup(Commands.runOnce(() -> {
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCone);
+
+                    double zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+                    
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                    zeroTime = Timer.getFPGATimestamp();
+                                while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                                    elevatorSubsystem.periodic();
+                                    intakeSubsystem.periodic();
+                                }
+
+                    elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                    intakeSubsystem.setSetpoint(IntakeConstants.kAngleRadHome);
+                    intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
+                }, elevatorSubsystem, intakeSubsystem)
+                ));
             }
         }
     }
 
-    public Command getAutonomousCommand() {
-            clawSubsystem.currWheelDirection = WheelDirection.INTAKE;
+    //public Command getAutonomousCommand() {}
+            /*clawSubsystem.currWheelDirection = WheelDirection.INTAKE;
             clawSubsystem.setSetPoint(ClawConstants.kAngleRadHome);
+            ParkCommand parkCommand = new ParkCommand(swerveSubsystem);
 
             if(autoStartSideChooser.getSelected() == "BlueSide") {
                 if(autoRoutineChooser.getSelected() == "AutoOpen") {
@@ -296,7 +305,7 @@ public class RobotContainer {
                             }, armSubsystem, clawSubsystem),
                             traj1
                         ),
-                        traj2,
+                        parkCommand,
                         Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                     );
                 }
@@ -404,7 +413,7 @@ public class RobotContainer {
                             }, armSubsystem, clawSubsystem),
                             traj1
                         ),
-                        traj2,
+                        parkCommand,
                         Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                     );
                 }
@@ -443,7 +452,7 @@ public class RobotContainer {
                     );
                 }
         }
-    }
+    }*/
 
     public boolean getConfigured() {
         return configured;

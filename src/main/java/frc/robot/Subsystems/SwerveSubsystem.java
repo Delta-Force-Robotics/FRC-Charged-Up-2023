@@ -12,7 +12,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -89,6 +88,10 @@ public class SwerveSubsystem extends SubsystemBase {
         return navX.getYaw();
     }
 
+    public double getInclination() {
+        return navX.getPitch();
+    }
+
     public Rotation2d getRotation2d() {
         return Rotation2d.fromDegrees(getHeading());
     }
@@ -128,19 +131,8 @@ public class SwerveSubsystem extends SubsystemBase {
         kSwerveDriveOdometry.update(getRotation2d(), getModulePositions());
 
         SmartDashboard.putNumber("Robot Heading", getHeading());
-        SmartDashboard.putNumber("Front Left Module Velocity", frontLeft.getDriveVelocity());
-        SmartDashboard.putNumber("Front Right Module Velocity", frontRight.getDriveVelocity());
-        SmartDashboard.putNumber("Back Left Module Velocity", backLeft.getDriveVelocity());
-        SmartDashboard.putNumber("Back Right Module Velocity", backRight.getDriveVelocity());
+        SmartDashboard.putNumber("Robot Pitch", getInclination());
         SmartDashboard.putString("Robot Location", getPose2d().getTranslation().toString());
-        SmartDashboard.putNumber("Front Left Position", Math.toDegrees(frontLeft.getTurnPosition()));
-        SmartDashboard.putNumber("Front Right Position", Math.toDegrees(frontRight.getTurnPosition()));
-        SmartDashboard.putNumber("Back Left Position", Math.toDegrees(backLeft.getTurnPosition()));
-        SmartDashboard.putNumber("Back Right Position", Math.toDegrees(backRight.getTurnPosition()));   
-        SmartDashboard.putString("Front Left MagField", frontLeft.getMagnetStrenght().name());
-        SmartDashboard.putString("Front Right MagField", frontRight.getMagnetStrenght().name());
-        SmartDashboard.putString("Back Left MagField", backLeft.getMagnetStrenght().name());
-        SmartDashboard.putString("Back Right MagField", backRight.getMagnetStrenght().name()); 
     }
 
     public void stopModules() {

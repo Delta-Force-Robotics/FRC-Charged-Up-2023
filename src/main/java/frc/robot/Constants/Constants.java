@@ -21,7 +21,7 @@ public class Constants {
         public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;
         public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;
         public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;
-        public static double kPTurning = 0.4;
+        public static double kPTurning = 0.6;
 
         public static final double kCPRAbsoluteEncoder = 4096;
     }
@@ -56,10 +56,10 @@ public class Constants {
         public static final boolean kBackLeftAbsoluteEncoderReversed = true;
         public static final boolean kBackRightAbsoluteEncoderReversed = true;
 
-        public static final double kFrontLeftAbsoluteEncoderOffset = Math.toRadians(58.535);
-        public static final double kFrontRightAbsoluteEncoderOffset = Math.toRadians(146.514);
-        public static final double kBackLeftAbsoluteEncoderOffset = Math.toRadians(-140.625);
-        public static final double kBackRightAbsoluteEncoderOffset = Math.toRadians(-117.598);
+        public static final double kFrontLeftAbsoluteEncoderOffset = Math.toRadians(58.975);
+        public static final double kFrontRightAbsoluteEncoderOffset = Math.toRadians(147.041);
+        public static final double kBackLeftAbsoluteEncoderOffset = Math.toRadians(-140.889);
+        public static final double kBackRightAbsoluteEncoderOffset = Math.toRadians(-117.861);
 
         public static final boolean kFrontLeftDriveMotorReversed = true;
         public static final boolean kFrontRightDriveMotorReversed = true;
@@ -71,7 +71,7 @@ public class Constants {
         public static final boolean kBackLeftTurnMotorReversed = false;
         public static final boolean kBackRightTurnMotorReversed = false;
 
-        public static boolean kFieldCentric = true;
+        public static boolean kFieldCentric = false;
         
         public static final int kFrontLeftAbsoluteEncoderPort = 15;
         public static final int kFrontRightAbsoluteEncoderPort = 14;
@@ -97,77 +97,72 @@ public class Constants {
         public static boolean slowMode = false;
     }
 
-    public static final class ArmConstants {
+    public static final class ElevatorConstants {
         public static final double kS = 0;
-        public static final double kV = 0.76381;
-        public static final double kA = 0.10614;
-        public static final double kCos = 1.7;
-
-        public static final double kP = 5.2;
-        public static final double kRetractP = 3;
-        public static final double kI = 0.2;
-        public static final double kD = 0.5;
-        public static final double kRetractD = 0.6;
-
-        public static volatile double armAngle = 0;
-
-        public static final double kArmMotorGearRatio = 1.0 / 80.0;
-        public static final double kArmMotorTicksToRadians = kArmMotorGearRatio * Math.PI * 2;
-        public static final double kArmMotorRPMToRadiansPerSec = kArmMotorTicksToRadians / 60;
-        public static final double kArmEncoderOffset = Math.toRadians(-90);
-
-        public static final double kArmFeedBackPositionTolerance = Math.toRadians(0.3); // in Radians
-        public static final double kArmFeedBackVelocityTolerance = Math.toRadians(0.3); // in Radians
-
-        public static final double kArmAngleRadConeLow = Math.toRadians(-70);
-        public static final double kArmAngleRadCubeLow = Math.toRadians(-70);
-
-        public static final double kArmAngleRadConeMid = Math.toRadians(-19);
-        public static final double kArmAngleRadCubeMid = Math.toRadians(-29);
-        
-        public static final double kArmAngleRadConeHigh = Math.toRadians(-3);
-        public static final double kArmAngleRadCubeHigh = Math.toRadians(-6);
-
-        public static final double kArmAngleRadIntake = Math.toRadians(-0.5);
-        public static final double kArmAngleRadHome = kArmEncoderOffset;
-
-        public static final double armAngleRadGroundIntake = Math.toRadians(-30);
-
-        public static boolean isHome = true;
-        public static boolean isScore = false;
-    }
-
-    public static final class ClawConstants {
-        public static final double maxkP = -8;
-        public static final double kI = -1;
-        public static final double kD = 0.2;
-
-        public static final double kS = 0.4;
         public static final double kV = 0;
         public static final double kA = 0;
-        public static final double kCos = 2.5;
+        public static final double kCos = 0;
 
-        public static final double kPivotMotorGearRatio = 1 / 60.0;
+        public static final double kP = 0;
+        public static final double kRetractP = 0;
+        public static final double kI = 0;
+        public static final double kD = 0;
+        public static final double kRetractD = 0;
+        public static final double kRetractI = 0;
+
+        public static final double kElevatorPulleyDiameter = 1; // in cm
+        public static final double kElevatorMotorGearRatio = 1.0 / 80.0;
+        public static final double kElevatorPulleyCircumference = Math.PI * kElevatorPulleyDiameter;
+        public static final double kElevatorMotorTicksToCm = kElevatorMotorGearRatio * kElevatorPulleyCircumference;
+        public static final double kElevatorMotorRPMToCmPerSec = kElevatorMotorTicksToCm / 60;
+
+        public static final double kElevatorFeedBackPositionTolerance = 1;
+        public static final double kElevatorFeedBackVelocityTolerance = 1;
+
+        public static final double kElevatorPosCubeLow = 0;
+        public static final double kElevatorPosCubeMid = 0;
+        public static final double kElevatorPosCubeHigh = 0;
+        
+        public static final double kElevatorPosConeLow = 0;
+        public static final double kElevatorPosConeMid = 0;
+        public static final double kElevatorPosConeHigh = 0;
+
+        public static final double kElevatorPosIntake = 0;
+        public static final double kElevatorPosHome = 0;
+    }
+
+    public static final class IntakeConstants {
+        public static final double kP = 0;
+        public static final double kI = 0;
+        public static final double kD = 0;
+
+        public static final double kS = 0;
+        public static final double kV = 0;
+        public static final double kA = 0;
+        public static final double kCos = 0;
+
+        public static final double kPivotMotorGearRatio = 0;
         public static final double kPivotMotorTicksToRadians = kPivotMotorGearRatio * Math.PI * 2;
         public static final double kPivotMotorRPMToRadiansPerSecond = kPivotMotorTicksToRadians / 60;
-        public static final double kPivotEncoderOffset = Math.toRadians(45);
+        public static final double kPivotEncoderOffset = Math.toRadians(0);
 
         public static final double kPivotFeedbackPositionTolerance = Math.toRadians(0.5);
         public static final double kPivotFeedbackVelocityTolerance = Math.toRadians(0.5);
 
-        public static final double kClawAngleRadScoreCube = Math.toRadians(35);
-        public static final double kClawAngleRadScoreCone = Math.toRadians(64);
-        public static final double kClawAngleRadIntake = Math.toRadians(10);
-        public static final double kClawAngleRadGroundIntake = Math.toRadians(-90);
+        public static final double kPivotAngleRadScoreCube = Math.toRadians(0);
+        public static final double kPivotAngleRadScoreCone = Math.toRadians(0);
+        public static final double kPivotAngleRadIntake = Math.toRadians(0);
+        public static final double kPivotAngleRadGroundIntake = Math.toRadians(0);
 
-        public static final double kAngleRadHome = kPivotEncoderOffset;
+        public static final double kAngleRadHome = Math.toRadians(0);
+        public static double kAngleFeedbackHome = Math.toRadians(0);
     }
 
     public static final class CANConstants {                                                                                                                                                                              
-        public static int kLeftArmMotor = 7;
-        public static int kRightArmMotor = 6;
-        public static int kClawPivotMotor = 17;
-        public static int kClawWheelMotor = 12;
+        public static int kLeftElevatorMotor = 0;
+        public static int kRightElevatorMotor = 0;
+        public static int kIntakePivotMotor = 0;
+        public static int kIntakeWheelMotor = 0;
     }
 
     public static final class OIConstants {
