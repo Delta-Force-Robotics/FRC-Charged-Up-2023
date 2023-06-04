@@ -29,24 +29,22 @@ public class IntakeSubsystem extends SubsystemBase{
 
     private BooleanSupplier isInterrupted;
 
-    private double setPoint = Math.toRadians(0); 
+    private double setPoint = IntakeConstants.kPivotAngleRadHome; 
 
     public WheelDirection currWheelDirection = WheelDirection.OFF;
     private GameElement currGameElement = GameElement.CONE;
 
     public IntakeSubsystem() {
-        pivotMotor.setInverted(true);    
+        pivotMotor.setInverted(true); 
+        wheelMotor.setOpenLoopRampRate(2);   
 
         pivotEncoder.setPositionConversionFactor(IntakeConstants.kPivotMotorTicksToRadians);        
         pivotEncoder.setVelocityConversionFactor(IntakeConstants.kPivotMotorRPMToRadiansPerSecond);
 
         //pivotEncoder.setPosition(Math.toRadians(100));
-        absoluteEncoderPivot.setInverted(true);
+        absoluteEncoderPivot.setInverted(false);
 
-        absoluteEncoderPivot.setPositionConversionFactor(IntakeConstants.kPivotMotorTicksToRadians);
-        absoluteEncoderPivot.setVelocityConversionFactor(IntakeConstants.kPivotMotorRPMToRadiansPerSecond);
-
-        pivotEncoder.setPosition(absoluteEncoderPivot.getPosition());
+        pivotEncoder.setPosition(wrapAroundEncoder(absoluteEncoderPivot.getPosition() / 0.274 * 2 * Math.PI));
 
         pivotFeedBack.setIntegratorRange(-1, 1);
 
@@ -74,18 +72,30 @@ public class IntakeSubsystem extends SubsystemBase{
         return throughBoreEncoder.getDistancePerRotation() + encoderPosition;
     }*/
 
+    public double wrapAroundEncoder(double encoderPosition) {
+        if (encoderPosition >= Math.PI) {
+            encoderPosition -= 2*Math.PI;
+        }
+
+        return encoderPosition; 
+    }
+
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("pivot", pivotEncoder.getPosition());        //SmartDashboard.putNumber("pivot motor", pivotEncoder.getPosition());
-        SmartDashboard.putNumber("absolut", absoluteEncoderPivot.getPosition());
+        SmartDashboard.putNumber("Pivot", pivotEncoder.getPosition());        //SmartDashboard.putNumber("pivot motor", pivotEncoder.getPosition());
+        SmartDashboard.putNumber("Absolut", absoluteEncoderPivot.getPosition());
         SmartDashboard.putNumber("feedforward", pivotFeedForward.calculate(IntakeConstants.kPivotAngleRadIntakeConeSubstation, 0));
         SmartDashboard.putNumber("feedback", pivotFeedBack.calculate(pivotEncoder.getPosition(), IntakeConstants.kPivotAngleRadIntakeConeSubstation));
         SmartDashboard.putNumber("feedforwardback", pivotFeedForward.calculate(IntakeConstants.kPivotAngleRadIntakeConeSubstation, 0) + pivotFeedBack.calculate(pivotEncoder.getPosition(), IntakeConstants.kPivotAngleRadIntakeConeSubstation));
         SmartDashboard.putNumber("offset", absoluteEncoderPivot.getZeroOffset());
+        SmartDashboard.putNumber("output current", wheelMotor.getOutputCurrent());
+        SmartDashboard.putNumber("applied output", wheelMotor.getAppliedOutput());
+        SmartDashboard.putNumber("setpoint", setPoint);
 
         updateWheelPower();
-
+            
         setMotorVoltageByPosition(setPoint);
+
     }
 
     /*public void scheduleGains(double pivotPosition) {
@@ -93,11 +103,15 @@ public class IntakeSubsystem extends SubsystemBase{
     }*/
 
     public void setMotorVoltageByPosition(double pivotAngleRad) {
-        pivotMotor.setVoltage(pivotFeedBack.calculate(pivotFeedForward.calculate(pivotAngleRad, 0) + pivotEncoder.getPosition(), pivotAngleRad));
+        pivotMotor.setVoltage(pivotFeedBack.calculate(pivotEncoder.getPosition(), pivotAngleRad) + pivotFeedForward.calculate(pivotAngleRad, 0));
     }
     
     public void setPivotPower(double pivotPower) {
         pivotMotor.set(pivotPower);
+    }
+
+    public double getOutputCurrent() {
+        return wheelMotor.getOutputCurrent();
     }
 
     public void updateWheelPower() {
@@ -107,7 +121,7 @@ public class IntakeSubsystem extends SubsystemBase{
             wheelPower = 0.5;
         }
         else if(currWheelDirection == WheelDirection.OUTTAKE) {
-            wheelPower = -0.2;
+            wheelPower = -0.5;
         }
 
         wheelMotor.set(wheelPower);

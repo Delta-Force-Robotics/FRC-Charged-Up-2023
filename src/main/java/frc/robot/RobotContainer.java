@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
+import frc.robot.Commands.AutoRetractCommand;
 import frc.robot.Commands.ElevatorManualControl;
 import frc.robot.Commands.SwerveJoystickCommand;
 import frc.robot.Constants.Constants;
@@ -62,17 +63,20 @@ public class RobotContainer {
                 () -> driverJoystick.getRawAxis(OIConstants.kDriverRotAxis),
                 () -> DriveConstants.kFieldCentric));
 
+        elevatorSubsystem.setDefaultCommand(new AutoRetractCommand(intakeSubsystem, elevatorSubsystem));
+
         configureButtonBindings();
     }
 
     private void configureButtonBindings() {
         configured = true;
 
-        new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
-            //intakeSubsystem.setSetpoint(Math.toRadians(-90));
-            elevatorSubsystem.setSetpoint(0.5);
+        /*new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
+            //elevatorSubsystem.setSetpoint(0.046);
+            //intakeSubsystem.setSetpoint(Math.toRadians(-128));
+            intakeSubsystem.setSetpoint(Math.toRadians(-70));
             //intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
-        }, elevatorSubsystem));
+        }, intakeSubsystem));
 
         new JoystickButton(driverJoystick, 2).onTrue(Commands.runOnce(() -> {
             intakeSubsystem.currWheelDirection = WheelDirection.OUTTAKE;
@@ -83,16 +87,16 @@ public class RobotContainer {
         }, intakeSubsystem));
 
         new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
-            //intakeSubsystem.setSetpoint(Math.toRadians(0));
-            elevatorSubsystem.setSetpoint(0.1);
-            //intakeSubsystem.currWheelDirection = WheelDirection.OFF;
-        }, elevatorSubsystem));
+            //elevatorSubsystem.setSetpoint(0);
+            intakeSubsystem.setSetpoint(Math.toRadians(0));
+            intakeSubsystem.currWheelDirection = WheelDirection.OFF;
+        }, intakeSubsystem));
 
         /*new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
             intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
         }, intakeSubsystem));*/
 
-        /*new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
+        new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
             if(Constants.ElevatorConstants.isHome || !Constants.ElevatorConstants.isScore) {
                 elevatorSubsystem.setSetpoint(getPositionToScore()[0]);
                 intakeSubsystem.setSetpoint(getPositionToScore()[1]);
@@ -109,9 +113,9 @@ public class RobotContainer {
                 Constants.ElevatorConstants.isHome = true;
                 Constants.ElevatorConstants.isScore = false;
             }
-        },elevatorSubsystem, intakeSubsystem));*/
+        },elevatorSubsystem, intakeSubsystem));
 
-        /*new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
+        new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
             if(Constants.ElevatorConstants.isHome) {
             elevatorSubsystem.setSetpoint(getPositionToIntake()[0]);
             intakeSubsystem.setSetpoint(getPositionToIntake()[1]);
@@ -143,6 +147,18 @@ public class RobotContainer {
         new JoystickButton(driver2Joystick, 4).onTrue(Commands.runOnce(() -> {
             elevatorSubsystem.setDesiredElevatorPosition(ElevatorSubsystem.ElevatorPosition.HIGH);
         }, elevatorSubsystem));
+
+        new JoystickButton(driverJoystick, 2 ).onTrue(Commands.runOnce(() -> {
+            intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
+        }, intakeSubsystem));
+
+        new JoystickButton(driverJoystick, 3).onTrue(Commands.runOnce(() -> {
+            intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OFF);
+        }, intakeSubsystem));
+
+        new JoystickButton(driverJoystick, 4).onTrue(Commands.runOnce(() -> {
+            intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+        },intakeSubsystem));
 
         new POVButton(driver2Joystick, 0).onTrue(Commands.runOnce(() -> {
             elevatorSubsystem.setDesiredIntakeGameElement(ElevatorSubsystem.IntakeGameElement.GROUND_CONE_UP);
@@ -190,13 +206,13 @@ public class RobotContainer {
             }
         }, limeLightSubsystem));
 
-        new POVButton(driverJoystick, 90).onTrue(Commands.runOnce(() -> {
+        /*new POVButton(driverJoystick, 90).onTrue(Commands.runOnce(() -> {
             if (limeLightSubsystem.currLedState == LEDState.PIPELINE) {
                 limeLightSubsystem.setLedMode(LEDState.BLINK);
             } else {
                 limeLightSubsystem.setLedMode(LEDState.PIPELINE);
             }
-        }, limeLightSubsystem));
+        }, limeLightSubsystem));/* */
     }
 
     public double[] getPositionToScore() {
@@ -236,6 +252,7 @@ public class RobotContainer {
         else
             return new double[] {ElevatorConstants.kElevatorPosIntakeCubeGround, IntakeConstants.kPivotAngleRadIntakeCubeGround};
     }
+    
     public Command getAutonomousCommand() {
         if(autoStartSideChooser.getSelected() == "BlueSide") {
             if(autoRoutineChooser.getSelected() == "AutoOpen") {

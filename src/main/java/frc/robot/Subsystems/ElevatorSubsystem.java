@@ -124,14 +124,9 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
     public TrapezoidProfile getTrapezoidProfile(double position) {
-        if (setPoint - position >= 0) {
-            Constraints motionConstraints = new Constraints(ElevatorConstants.kElevatorRetractMaxVel, ElevatorConstants.kElevatorRetractMaxAccel);
-            return new TrapezoidProfile(motionConstraints, new TrapezoidProfile.State(position, 0), new State(leftEncoder.getPosition(), 0));
-        }   
-        else {
-            Constraints motionConstraints = new Constraints(ElevatorConstants.kElevatorMaxVel, ElevatorConstants.kElevatorMaxAccel);
-            return new TrapezoidProfile(motionConstraints, new TrapezoidProfile.State(position, 0), new State(leftEncoder.getPosition(), 0));
-        }
+        Constraints motionConstraints = new Constraints(ElevatorConstants.kElevatorMaxVel, ElevatorConstants.kElevatorMaxAccel);
+
+        return new TrapezoidProfile(motionConstraints, new TrapezoidProfile.State(position, 0), new State(leftEncoder.getPosition(), 0));
     }
 
     public void setMotorPower(double motorPower) {
