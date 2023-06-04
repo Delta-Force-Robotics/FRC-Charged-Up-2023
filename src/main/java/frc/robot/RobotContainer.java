@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
-import frc.robot.Commands.ElevatorVoltageCommand;
+import frc.robot.Commands.ElevatorManualControl;
 import frc.robot.Commands.SwerveJoystickCommand;
 import frc.robot.Constants.Constants;
 import frc.robot.Constants.Constants.DriveConstants;
@@ -43,8 +43,6 @@ public class RobotContainer {
     private final SendableChooser autoStartSideChooser = new SendableChooser<String>();
     private final SendableChooser autoRoutineChooser = new SendableChooser<String>();
 
-    //ElevatorVoltageCommand elevatorVoltageCommand = new ElevatorVoltageCommand(elevatorSubsystem);
-
     public RobotContainer() {
         autoStartSideChooser.addOption("Blue", "BlueSide");
         autoStartSideChooser.addOption("Red", "RedSide");
@@ -64,8 +62,6 @@ public class RobotContainer {
                 () -> driverJoystick.getRawAxis(OIConstants.kDriverRotAxis),
                 () -> DriveConstants.kFieldCentric));
 
-        //elevatorSubsystem.setDefaultCommand(new ElevatorVoltageCommand(elevatorSubsystem));
-
         configureButtonBindings();
     }
 
@@ -73,9 +69,28 @@ public class RobotContainer {
         configured = true;
 
         new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
-            elevatorSubsystem.setDesiredElevatorPosition(ElevatorSubsystem.ElevatorPosition.LOW);
-            elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeLow);
+            //intakeSubsystem.setSetpoint(Math.toRadians(-90));
+            elevatorSubsystem.setSetpoint(0.5);
+            //intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
         }, elevatorSubsystem));
+
+        new JoystickButton(driverJoystick, 2).onTrue(Commands.runOnce(() -> {
+            intakeSubsystem.currWheelDirection = WheelDirection.OUTTAKE;
+        }, intakeSubsystem));
+
+        new JoystickButton(driverJoystick, 3).onTrue(Commands.runOnce(() -> {
+            intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
+        }, intakeSubsystem));
+
+        new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
+            //intakeSubsystem.setSetpoint(Math.toRadians(0));
+            elevatorSubsystem.setSetpoint(0.1);
+            //intakeSubsystem.currWheelDirection = WheelDirection.OFF;
+        }, elevatorSubsystem));
+
+        /*new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
+            intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
+        }, intakeSubsystem));*/
 
         /*new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
             if(Constants.ElevatorConstants.isHome || !Constants.ElevatorConstants.isScore) {
@@ -85,7 +100,7 @@ public class RobotContainer {
                 intakeSubsystem.currWheelDirection = WheelDirection.OUTTAKE;
 
                 Constants.ElevatorConstants.isHome = false;
-                Constants.ElevatorConstants.isScore = true;
+                Constants.ElevatorConstants.isScore = false;
             }
             else {
                 elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
@@ -96,7 +111,7 @@ public class RobotContainer {
             }
         },elevatorSubsystem, intakeSubsystem));*/
 
-        new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
+        /*new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
             if(Constants.ElevatorConstants.isHome) {
             elevatorSubsystem.setSetpoint(getPositionToIntake()[0]);
             intakeSubsystem.setSetpoint(getPositionToIntake()[1]);

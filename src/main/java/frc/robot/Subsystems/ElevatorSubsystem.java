@@ -1,7 +1,5 @@
 package frc.robot.Subsystems;
 
-import java.util.function.BooleanSupplier;
-
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -24,13 +22,13 @@ public class ElevatorSubsystem extends SubsystemBase{
     private CANSparkMax rightMotor = new CANSparkMax(Constants.CANConstants.kRightElevatorMotor, MotorType.kBrushless);
     private RelativeEncoder leftEncoder = leftMotor.getEncoder();
     private RelativeEncoder rightEncoder = rightMotor.getEncoder();
-    private AbsoluteEncoder absoluteEncoder = rightMotor.getAbsoluteEncoder(Type.kDutyCycle);
 
     private double motionStartTime = Timer.getFPGATimestamp();
     private TrapezoidProfile motionProfile = getTrapezoidProfile(0);
     private ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(ElevatorConstants.kS, ElevatorConstants.kG, ElevatorConstants.kV, ElevatorConstants.kA);
     private PIDController leftElevatorFeedback = new PIDController(ElevatorConstants.kP, ElevatorConstants.kI, ElevatorConstants.kD);
     private PIDController rightElevatorFeedback = new PIDController(ElevatorConstants.kP, ElevatorConstants.kI, ElevatorConstants.kD);
+    private AbsoluteEncoder absoluteEncoder = rightMotor.getAbsoluteEncoder(Type.kDutyCycle);
 
     private double setPoint = 0;
 
@@ -42,16 +40,23 @@ public class ElevatorSubsystem extends SubsystemBase{
     public boolean isElementInside = false;
 
     public ElevatorSubsystem() {
-        leftMotor.setInverted(false);
+        leftMotor.setInverted(true);
         rightMotor.setInverted(false);
+
+        leftEncoder.setPositionConversionFactor(Constants.ElevatorConstants.kElevatorMotorTicksToM);
+        rightEncoder.setPositionConversionFactor(Constants.ElevatorConstants.kElevatorMotorTicksToM);
+
+        leftEncoder.setVelocityConversionFactor(Constants.ElevatorConstants.kElevatorMotorRPMToMPerSec);
+        rightEncoder.setVelocityConversionFactor(Constants.ElevatorConstants.kElevatorMotorRPMToMPerSec);
+
+        absoluteEncoder.setPositionConversionFactor(ElevatorConstants.kElevatorMotorTicksToM);
+        absoluteEncoder.setVelocityConversionFactor(ElevatorConstants.kElevatorMotorRPMToMPerSec);
 
         leftMotor.setSmartCurrentLimit(40);
         rightMotor.setSmartCurrentLimit(40);
 
-        absoluteEncoder.setInverted(false);
-
-        absoluteEncoder.setPositionConversionFactor(ElevatorConstants.kElevatorMotorTicksToM);
-        absoluteEncoder.setVelocityConversionFactor(ElevatorConstants.kElevatorMotorRPMToMPerSec);
+        leftEncoder.setPosition(absoluteEncoder.getPosition());
+        rightEncoder.setPosition(absoluteEncoder.getPosition());
 
         rightElevatorFeedback.setIntegratorRange(-1, 1);
         leftElevatorFeedback.setIntegratorRange(-1, 1);
@@ -67,29 +72,30 @@ public class ElevatorSubsystem extends SubsystemBase{
         refreshControlLoop();
         SmartDashboard.putNumber("elvatorMotorLeft", leftEncoder.getPosition());
         SmartDashboard.putNumber("elvatorMotorRight", rightEncoder.getPosition());
-        SmartDashboard.putNumber("absolute elevator", absoluteEncoder.getPosition());
-    } 
 
-    public double getPosition() {
-        return absoluteEncoder.getPosition();
-    }
-
-    public double getVelocity() {
-        return absoluteEncoder.getVelocity();
     }
 
     public void refreshControlLoop() {
         State motState = motionProfile.calculate(Timer.getFPGATimestamp() - motionStartTime);
+        double velocity = motState.velocity;
         
         leftMotor.setVoltage(
-            elevatorFeedforward.calculate(motState.velocity, ElevatorConstants.kElevatorMaxAccel)
-            + leftElevatorFeedback.calculate(getPosition(), setPoint)
+            elevatorFeedforward.calculate(velocity)
+            + leftElevatorFeedback.calculate(leftEncoder.getPosition(), setPoint)
         );
 
         rightMotor.setVoltage(
-            elevatorFeedforward.calculate(motState.velocity, ElevatorConstants.kElevatorMaxAccel)
-            + rightElevatorFeedback.calculate(getPosition(), setPoint)
+            elevatorFeedforward.calculate(velocity)
+            + rightElevatorFeedback.calculate(rightEncoder.getPosition(), setPoint)
         );
+
+        SmartDashboard.putNumber("velocityyyyy", velocity);
+        SmartDashboard.putNumber("RightAppliedOutput", elevatorFeedforward.calculate(velocity));
+
+        SmartDashboard.putNumber("ElevatorFeedBack", elevatorFeedforward.calculate(velocity));
+
+        SmartDashboard.putNumber("elvatorFeedBackLeft", leftElevatorFeedback.calculate(leftEncoder.getPosition(), setPoint));
+        SmartDashboard.putNumber("elevatorFeedBackRight", rightElevatorFeedback.calculate(rightEncoder.getPosition(), setPoint));
     }
 
     public double getSetPoint() {
@@ -97,6 +103,20 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
     public void setSetpoint(double elevatorPosM) {
+        if(setPoint - elevatorPosM >= 0) {
+            leftElevatorFeedback.setP(ElevatorConstants.kRetractP);
+            rightElevatorFeedback.setP(ElevatorConstants.kRetractP);
+
+            leftElevatorFeedback.setD(ElevatorConstants.kRetractD);
+            rightElevatorFeedback.setD(ElevatorConstants.kRetractD);
+        }
+        else {
+            leftElevatorFeedback.setP(ElevatorConstants.kP);
+            rightElevatorFeedback.setP(ElevatorConstants.kP);
+
+            leftElevatorFeedback.setD(ElevatorConstants.kD);
+            rightElevatorFeedback.setD(ElevatorConstants.kD);
+        }
         setPoint = elevatorPosM;
         motionStartTime = Timer.getFPGATimestamp();
 
@@ -104,9 +124,14 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
     public TrapezoidProfile getTrapezoidProfile(double position) {
-        Constraints motionConstraints = new Constraints(ElevatorConstants.kElevatorMaxVel, ElevatorConstants.kElevatorMaxAccel);
-
-        return new TrapezoidProfile(motionConstraints, new State(position, 0), new State(position, getVelocity()));
+        if (setPoint - position >= 0) {
+            Constraints motionConstraints = new Constraints(ElevatorConstants.kElevatorRetractMaxVel, ElevatorConstants.kElevatorRetractMaxAccel);
+            return new TrapezoidProfile(motionConstraints, new TrapezoidProfile.State(position, 0), new State(leftEncoder.getPosition(), 0));
+        }   
+        else {
+            Constraints motionConstraints = new Constraints(ElevatorConstants.kElevatorMaxVel, ElevatorConstants.kElevatorMaxAccel);
+            return new TrapezoidProfile(motionConstraints, new TrapezoidProfile.State(position, 0), new State(leftEncoder.getPosition(), 0));
+        }
     }
 
     public void setMotorPower(double motorPower) {

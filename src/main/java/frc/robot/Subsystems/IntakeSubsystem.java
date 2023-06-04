@@ -1,5 +1,6 @@
 package frc.robot.Subsystems;
 
+import java.io.Console;
 import java.util.function.BooleanSupplier;
 
 import com.revrobotics.AbsoluteEncoder;
@@ -24,22 +25,28 @@ public class IntakeSubsystem extends SubsystemBase{
     private PIDController pivotFeedBack = new PIDController(IntakeConstants.kP, IntakeConstants.kI, IntakeConstants.kD);
     private ArmFeedforward pivotFeedForward = new ArmFeedforward(IntakeConstants.kS, IntakeConstants.kCos, IntakeConstants.kV, IntakeConstants.kA);
     //private DutyCycleEncoder throughBoreEncoder = new DutyCycleEncoder(0);
-    private AbsoluteEncoder absoluteEncoderPivot = pivotMotor.getAbsoluteEncoder(Type.kDutyCycle);
+    private AbsoluteEncoder absoluteEncoderPivot = pivotMotor.getAbsoluteEncoder(Type.kDutyCycle); 
 
     private BooleanSupplier isInterrupted;
 
-    private double setPoint = IntakeConstants.kPivotEncoderOffset; 
+    private double setPoint = Math.toRadians(0); 
 
     public WheelDirection currWheelDirection = WheelDirection.OFF;
     private GameElement currGameElement = GameElement.CONE;
 
     public IntakeSubsystem() {
-        pivotMotor.setInverted(true);
+        pivotMotor.setInverted(true);    
 
-        absoluteEncoderPivot.setPositionConversionFactor(IntakeConstants.kPivotMotorTicksToRadians);        
+        pivotEncoder.setPositionConversionFactor(IntakeConstants.kPivotMotorTicksToRadians);        
+        pivotEncoder.setVelocityConversionFactor(IntakeConstants.kPivotMotorRPMToRadiansPerSecond);
+
+        //pivotEncoder.setPosition(Math.toRadians(100));
+        absoluteEncoderPivot.setInverted(true);
+
+        absoluteEncoderPivot.setPositionConversionFactor(IntakeConstants.kPivotMotorTicksToRadians);
         absoluteEncoderPivot.setVelocityConversionFactor(IntakeConstants.kPivotMotorRPMToRadiansPerSecond);
 
-        absoluteEncoderPivot.setInverted(false);
+        pivotEncoder.setPosition(absoluteEncoderPivot.getPosition());
 
         pivotFeedBack.setIntegratorRange(-1, 1);
 
@@ -51,9 +58,9 @@ public class IntakeSubsystem extends SubsystemBase{
         this.isInterrupted = isInterrupted;
     }
 
-    public double getPosition() {
+    /*public double getPosition() {
         return absoluteEncoderPivot.getPosition();
-    }
+    } */
 
     /*public double getPosition() {
         return wrapAroundEncoder((-throughBoreEncoder.getAbsolutePosition() + throughBoreEncoder.getPositionOffset()) * throughBoreEncoder.getDistancePerRotation());
@@ -69,15 +76,24 @@ public class IntakeSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("pivot", getPosition());        //SmartDashboard.putNumber("pivot motor", pivotEncoder.getPosition());
+        SmartDashboard.putNumber("pivot", pivotEncoder.getPosition());        //SmartDashboard.putNumber("pivot motor", pivotEncoder.getPosition());
+        SmartDashboard.putNumber("absolut", absoluteEncoderPivot.getPosition());
+        SmartDashboard.putNumber("feedforward", pivotFeedForward.calculate(IntakeConstants.kPivotAngleRadIntakeConeSubstation, 0));
+        SmartDashboard.putNumber("feedback", pivotFeedBack.calculate(pivotEncoder.getPosition(), IntakeConstants.kPivotAngleRadIntakeConeSubstation));
+        SmartDashboard.putNumber("feedforwardback", pivotFeedForward.calculate(IntakeConstants.kPivotAngleRadIntakeConeSubstation, 0) + pivotFeedBack.calculate(pivotEncoder.getPosition(), IntakeConstants.kPivotAngleRadIntakeConeSubstation));
+        SmartDashboard.putNumber("offset", absoluteEncoderPivot.getZeroOffset());
 
         updateWheelPower();
 
         setMotorVoltageByPosition(setPoint);
     }
 
+    /*public void scheduleGains(double pivotPosition) {
+        pivotFeedBack.setP(Math.abs(Math.cos(pivotPosition)) * IntakeConstants.kP);
+    }*/
+
     public void setMotorVoltageByPosition(double pivotAngleRad) {
-        pivotMotor.setVoltage(pivotFeedForward.calculate(pivotAngleRad, 0) + pivotFeedBack.calculate(getPosition(), pivotAngleRad));
+        pivotMotor.setVoltage(pivotFeedBack.calculate(pivotFeedForward.calculate(pivotAngleRad, 0) + pivotEncoder.getPosition(), pivotAngleRad));
     }
     
     public void setPivotPower(double pivotPower) {
