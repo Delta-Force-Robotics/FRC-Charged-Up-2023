@@ -1,6 +1,7 @@
 package frc.robot.Commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants.Constants;
 import frc.robot.Constants.Constants.IntakeConstants;
 import frc.robot.Subsystems.ElevatorSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
@@ -23,6 +24,9 @@ public class AutoRetractCommand extends CommandBase {
         if(intakeSubsystem.getOutputCurrent() > 30 && lastCurrent <= 30) {
             intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
             elevatorSubsystem.setSetpoint(0);
+
+            Constants.ElevatorConstants.isHome = true;
+            Constants.ElevatorConstants.isScore = false;
         }
 
         lastCurrent = intakeSubsystem.getOutputCurrent();

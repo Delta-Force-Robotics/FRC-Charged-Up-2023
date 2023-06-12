@@ -6,9 +6,12 @@ package frc.robot;
 
 import com.pathplanner.lib.server.PathPlannerServer;
 
+import edu.wpi.first.wpilibj.AddressableLED;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.Constants.IntakeConstants;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -37,6 +40,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    robot.intakeSubsystem.setSetpoint(Math.toRadians(90));
     robot.getAutonomousCommand().schedule();
   }
 
@@ -48,6 +52,7 @@ public class Robot extends TimedRobot {
     if(!robot.getConfigured()) {
       robot.teleOpInit();
     }
+    robot.intakeSubsystem.setSetpoint(Math.toRadians(90));
   }
 
   @Override

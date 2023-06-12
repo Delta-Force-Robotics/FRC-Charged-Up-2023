@@ -37,12 +37,12 @@ public class LimelightSubsystem extends SubsystemBase {
         }
     }
 
-    @Override
+    /*@Override
     public void periodic() {
         for(NetworkTableEntry entry : collectedEntries) {
             SmartDashboard.putNumber(entry.getName(), entry.getDouble(0.0));
         }
-    }
+    }*/
 
     public void setPipeline(double pipelineIndex) {
         writeNetworkTableEntry("pipeline", pipelineIndex);

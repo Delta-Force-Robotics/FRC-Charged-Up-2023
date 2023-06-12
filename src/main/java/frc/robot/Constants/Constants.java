@@ -21,7 +21,7 @@ public class Constants {
         public static final double kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI;
         public static final double kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60;
         public static final double kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60;
-        public static double kPTurning = 0.6;
+        public static double kPTurning = 0.5;
 
         public static final double kCPRAbsoluteEncoder = 4096;
     }
@@ -81,18 +81,18 @@ public class Constants {
         public static final double kTeleDriveMaxSpeedMetersPerSecond = 4;
         public static final double kTeleDriveMaxAccelerationUnitsPerSecond = 4;
         public static final double kTeleDriveMaxAngularSpeedRadiansPerSecond = Math.toRadians(360);
-        public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = Math.toRadians(360);
+        public static final double kTeleDriveMaxAngularAccelerationUnitsPerSecond = Math.toRadians(720);
 
         public static final double kV = 2.5253;
         public static final double kA = 1.4111;
         public static final double kS = 0.18974;
-        public static final double kPVel = 2;
+        public static final double kPVel = 4;
         public static final double kIVel = 0;
         public static final double kDVel = 0;
 
-        public static final double kPTheta = 4;
-        public static final double kPX = 4;
-        public static final double kPY = 4;
+        public static final double kPTheta = 2.5;
+        public static final double kPX = 3.5;
+        public static final double kPY = 3.5;
 
         public static boolean slowMode = false;
     }
@@ -116,24 +116,25 @@ public class Constants {
         public static final double kElevatorMotorTicksToM = kElevatorPulleyCircumference * kElevatorMotorGearRatio;
         public static final double kElevatorMotorRPMToMPerSec = kElevatorMotorTicksToM / 60;
 
-        public static final double kElevatorMaxVel = 0.8;
-        public static final double kElevatorMaxAccel = 0.8;
+        public static final double kElevatorMaxVel = 1;
+        public static final double kElevatorMaxAccel = 1;
 
         public static final double kElevatorFeedBackPositionTolerance = 1;
         public static final double kElevatorFeedBackVelocityTolerance = 1;
 
-        public static final double kElevatorPosCubeLow = 0.1;
-        public static final double kElevatorPosCubeMid = 0.4;
-        public static final double kElevatorPosCubeHigh = 0.6;
+        public static final double kElevatorPosCubeLow = 0;
+        public static final double kElevatorPosCubeMid = 0.28;
+        public static final double kElevatorPosCubeHigh = 0.54;
         
-        public static final double kElevatorPosConeLow = 0.1;
-        public static final double kElevatorPosConeMid = 0.4;
-        public static final double kElevatorPosConeHigh = 0.6;
+        public static final double kElevatorPosConeLow = 0.26;
+        public static final double kElevatorPosConeMid = 0.55;
+        public static final double kElevatorPosConeHigh = 0.75;
 
-        public static final double kElevatorPosIntakeConeUp = 0.197;
-        public static final double kElevatorPosIntakeConeTipped = 0;
-        public static final double kElevatorPosIntakeConeSubstation = 0.5;
+        public static final double kElevatorPosIntakeConeUp = 0.195;
+        public static final double kElevatorPosIntakeConeTipped = 0.062;
+        public static final double kElevatorPosIntakeConeSubstation = 0.097;
         public static final double kElevatorPosIntakeCubeGround = 0;
+        public static final double kElevatorPosIntakeConeDoubleSubstation = 0.5;
 
         public static final double kElevatorPosHome = 0;
 
@@ -141,15 +142,19 @@ public class Constants {
         public static boolean isScore = false;
     }
 
-    public static final class IntakeConstants {
-        public static final double kP = 2.5;
-        public static final double kI = 0.001;
-        public static final double kD = 0.00007;
+public static final class IntakeConstants {
+        public static final double kP = 2;
+        public static final double kI = 0;
+        public static final double kD = 0;
 
-        public static final double kS = 0.33672;
-        public static final double kV = 0; //.41735;
-        public static final double kA = 0; //03135;
-        public static final double kCos = 1;
+        public static final double kVeloP = 0;
+        public static final double kVeloI = 0;
+        public static final double kVeloD = 0;
+
+        public static final double kS = 0.28801;
+        public static final double kV = 0.46192;
+        public static final double kA = 0.038527;
+        public static final double kCos = 0.95;
 
         public static final double kPivotMotorGearRatio = 1 / 22.5;
         public static final double kPivotMotorTicksToRadians = kPivotMotorGearRatio * Math.PI * 2;
@@ -159,18 +164,22 @@ public class Constants {
         public static final double kPivotFeedbackPositionTolerance = Math.toRadians(0.5);
         public static final double kPivotFeedbackVelocityTolerance = Math.toRadians(0.5);
 
-        public static final double kPivotAngleRadScoreCube = Math.toRadians(0);
-        public static final double kPivotAngleRadScoreCone = Math.toRadians(0);
+        public static final double kPivotAngleRadScoreCube = Math.toRadians(60);
+        public static final double kPivotAngleRadScoreConeMid = Math.toRadians(-40);
+        public static final double kPivotAngleRadScoreConeHigh = Math.toRadians(-45);
 
-        public static final double kPivotAngleRadIntakeConeUp = Math.toRadians(-90);
-        public static final double kPivotAngleRadIntakeConeTipped = Math.toRadians(-45);
-        public static final double kPivotAngleRadIntakeConeSubstation = Math.toRadians(30);
-        public static final double kPivotAngleRadIntakeCubeGround = Math.toRadians(5);
-        public static final double kPivotAngleRadIntakeConeSingleSubstaion = Math.toRadians(45);
+        public static final double kPivotAngleRadIntakeConeUp = Math.toRadians(-45);
+        public static final double kPivotAngleRadIntakeConeTipped = Math.toRadians(-57);
+        public static final double kPivotAngleRadIntakeConeSubstation = Math.toRadians(60);
+        public static final double kPivotAngleRadIntakeCubeGround = Math.toRadians(1);
+        public static final double kPivotAngleRadIntakeConeDoubleSubstaion = Math.toRadians(45);
 
         public static final double kPivotAngleRadHome = Math.toRadians(90);
-        public static double kAngleFeedbackHome = Math.toRadians(0);
+
+        public static final double kIntakeMaxVel = Math.toRadians(360);
+        public static final double kIntakeMaxAccel = Math.toRadians(360);
     }
+
 
     public static final class CANConstants {                                                                                                                                                                              
         public static int kLeftElevatorMotor = 9;

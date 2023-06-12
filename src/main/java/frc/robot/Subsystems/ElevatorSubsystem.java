@@ -31,6 +31,8 @@ public class ElevatorSubsystem extends SubsystemBase{
     private AbsoluteEncoder absoluteEncoder = rightMotor.getAbsoluteEncoder(Type.kDutyCycle);
 
     private double setPoint = 0;
+    private double lastVelTime = 0;
+    private double lastVel = 0;
 
     private ElevatorPosition desiredElevatorPosition = ElevatorPosition.HOME;
     private ElevatorPosition currElevatorPosition = ElevatorPosition.HOME;
@@ -70,32 +72,28 @@ public class ElevatorSubsystem extends SubsystemBase{
     @Override
     public void periodic() {
         refreshControlLoop();
-        SmartDashboard.putNumber("elvatorMotorLeft", leftEncoder.getPosition());
-        SmartDashboard.putNumber("elvatorMotorRight", rightEncoder.getPosition());
+        /*SmartDashboard.putNumber("elvatorMotorLeft", leftEncoder.getPosition());
+        SmartDashboard.putNumber("elvatorMotorRight", rightEncoder.getPosition());*/
 
     }
 
     public void refreshControlLoop() {
         State motState = motionProfile.calculate(Timer.getFPGATimestamp() - motionStartTime);
         double velocity = motState.velocity;
+        double accel = (velocity - lastVel) / (Timer.getFPGATimestamp() - lastVelTime);
         
         leftMotor.setVoltage(
-            elevatorFeedforward.calculate(velocity)
+            elevatorFeedforward.calculate(velocity, accel)
             + leftElevatorFeedback.calculate(leftEncoder.getPosition(), setPoint)
         );
 
         rightMotor.setVoltage(
-            elevatorFeedforward.calculate(velocity)
+            elevatorFeedforward.calculate(velocity, accel)
             + rightElevatorFeedback.calculate(rightEncoder.getPosition(), setPoint)
         );
 
-        SmartDashboard.putNumber("velocityyyyy", velocity);
-        SmartDashboard.putNumber("RightAppliedOutput", elevatorFeedforward.calculate(velocity));
-
-        SmartDashboard.putNumber("ElevatorFeedBack", elevatorFeedforward.calculate(velocity));
-
-        SmartDashboard.putNumber("elvatorFeedBackLeft", leftElevatorFeedback.calculate(leftEncoder.getPosition(), setPoint));
-        SmartDashboard.putNumber("elevatorFeedBackRight", rightElevatorFeedback.calculate(rightEncoder.getPosition(), setPoint));
+        lastVel = velocity;
+        lastVelTime = Timer.getFPGATimestamp();
     }
 
     public double getSetPoint() {
@@ -117,6 +115,7 @@ public class ElevatorSubsystem extends SubsystemBase{
             leftElevatorFeedback.setD(ElevatorConstants.kD);
             rightElevatorFeedback.setD(ElevatorConstants.kD);
         }
+
         setPoint = elevatorPosM;
         motionStartTime = Timer.getFPGATimestamp();
 

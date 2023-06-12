@@ -15,14 +15,24 @@ public class ParkCommand extends CommandBase {
 
     @Override 
     public void execute() {
+
         if(Math.abs(swerveSubsystem.getInclination()) >= 2) {
-            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0.7*(swerveSubsystem.getInclination()/15), 0, 0, swerveSubsystem.getRotation2d());
+            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-0.7*(swerveSubsystem.getInclination()/15), 0, 0, swerveSubsystem.getRotation2d());
             SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
             swerveSubsystem.setModulesStates(moduleStates);
         }
         else {
             swerveSubsystem.stopModules();
         }
+
+        /*if(Math.abs(swerveSubsystem.getInclination()) >= 2) {
+            ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0.1*(swerveSubsystem.getInclination()/10), 0, 0, swerveSubsystem.getRotation2d());
+            SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+            swerveSubsystem.setModulesStates(moduleStates);
+        }
+        else {
+            swerveSubsystem.stopModules();
+        }*/
     }
 
     @Override
