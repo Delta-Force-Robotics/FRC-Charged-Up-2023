@@ -102,7 +102,7 @@ public class SwerveModuleCoaxial {
     }
 
     public void setDesiredState(SwerveModuleState state) {
-        if(Math.abs(state.speedMetersPerSecond) < 0.001) {
+        if(Math.abs(state.speedMetersPerSecond) < 0.05) {
             stop();
         }
 
@@ -114,7 +114,7 @@ public class SwerveModuleCoaxial {
     }
 
     public void setDesiredStateAuton(SwerveModuleState state) {
-        if(Math.abs(state.speedMetersPerSecond) < 0.001) {
+        if(Math.abs(state.speedMetersPerSecond) < 0.1) {
             stop();
         }
 

@@ -28,18 +28,21 @@ public class ElevatorSubsystem extends SubsystemBase{
     private ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(ElevatorConstants.kS, ElevatorConstants.kG, ElevatorConstants.kV, ElevatorConstants.kA);
     private PIDController leftElevatorFeedback = new PIDController(ElevatorConstants.kP, ElevatorConstants.kI, ElevatorConstants.kD);
     private PIDController rightElevatorFeedback = new PIDController(ElevatorConstants.kP, ElevatorConstants.kI, ElevatorConstants.kD);
-    private AbsoluteEncoder absoluteEncoder = rightMotor.getAbsoluteEncoder(Type.kDutyCycle);
+    private AbsoluteEncoder absoluteEncoder = leftMotor.getAbsoluteEncoder(Type.kDutyCycle);
 
     private double setPoint = 0;
     private double lastVelTime = 0;
     private double lastVel = 0;
 
     private ElevatorPosition desiredElevatorPosition = ElevatorPosition.HOME;
-    private ElevatorPosition currElevatorPosition = ElevatorPosition.HOME;
+    //private ElevatorPosition currElevatorPosition = ElevatorPosition.HOME;
 
     public IntakeGameElement desiredIntakeGameElement = IntakeGameElement.GROUND_CONE_UP;
 
     public boolean isElementInside = false;
+
+    public static boolean isHome = true;
+    public static boolean isScore = false;
 
     public ElevatorSubsystem() {
         leftMotor.setInverted(true);
@@ -72,8 +75,10 @@ public class ElevatorSubsystem extends SubsystemBase{
     @Override
     public void periodic() {
         refreshControlLoop();
-        /*SmartDashboard.putNumber("elvatorMotorLeft", leftEncoder.getPosition());
-        SmartDashboard.putNumber("elvatorMotorRight", rightEncoder.getPosition());*/
+        SmartDashboard.putBoolean("isHome", ElevatorSubsystem.isHome);
+        SmartDashboard.putBoolean("isScore", ElevatorSubsystem.isScore);
+        SmartDashboard.putNumber("elvatorMotorLeft", leftEncoder.getPosition());
+        SmartDashboard.putNumber("elvatorMotorRight", rightEncoder.getPosition());
 
     }
 
@@ -94,6 +99,10 @@ public class ElevatorSubsystem extends SubsystemBase{
 
         lastVel = velocity;
         lastVelTime = Timer.getFPGATimestamp();
+    }
+
+    public void resetTimer() {
+        motionStartTime = Timer.getFPGATimestamp();
     }
 
     public double getSetPoint() {
@@ -142,17 +151,17 @@ public class ElevatorSubsystem extends SubsystemBase{
         return desiredElevatorPosition;
     }
 
-    public void setCurrElevatorPosition(ElevatorPosition elevatorPosition) {
+    /*public void setCurrElevatorPosition(ElevatorPosition elevatorPosition) {
         currElevatorPosition = elevatorPosition;
-    }
+    }*/
 
     public void setDesiredElevatorPosition(ElevatorPosition elevatorPosition) {
         desiredElevatorPosition = elevatorPosition;
     }
 
-    public ElevatorPosition getCurrElevatorPosition() {
+    /*public ElevatorPosition getCurrElevatorPosition() {
         return currElevatorPosition;
-    }
+    }*/
 
     public IntakeGameElement getDesiredIntakeGameElement(){
         return desiredIntakeGameElement;

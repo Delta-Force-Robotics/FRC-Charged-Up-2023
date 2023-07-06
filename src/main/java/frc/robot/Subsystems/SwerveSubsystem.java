@@ -76,6 +76,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
                 zeroHeading();
             } catch (Exception e) {
+
             }
         }).start();
     }
@@ -83,9 +84,13 @@ public class SwerveSubsystem extends SubsystemBase {
     public void zeroHeading() {
         navX.zeroYaw();
     }
+    
+    /*public void setAngle(double angle) {
+        navX.setAngleAdjustment(angle);
+    }*/
 
     public double getHeading() {
-        return navX.getYaw();
+        return navX.getYaw() + 180;
     }
 
     public double getInclination() {
@@ -130,9 +135,10 @@ public class SwerveSubsystem extends SubsystemBase {
     public void periodic() {
         kSwerveDriveOdometry.update(getRotation2d(), getModulePositions());
 
-        /*SmartDashboard.putNumber("Robot Heading", getHeading());
-        SmartDashboard.putNumber("Robot Pitch", getInclination());
-        SmartDashboard.putString("Robot Location", getPose2d().getTranslation().toString());*/
+        SmartDashboard.putNumber("frontLeft", frontLeft   .getTurnPosition());
+        SmartDashboard.putNumber("frontRight", frontRight  .getTurnPosition());
+        SmartDashboard.putNumber("backLeft", backLeft    .getTurnPosition());
+        SmartDashboard.putNumber("backRight", backRight   .getTurnPosition());
     }
 
     public void stopModules() {

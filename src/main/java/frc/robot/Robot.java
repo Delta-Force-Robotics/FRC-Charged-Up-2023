@@ -6,12 +6,17 @@ package frc.robot;
 
 import com.pathplanner.lib.server.PathPlannerServer;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.NotifierCommand;
 import frc.robot.Constants.Constants.IntakeConstants;
+import frc.robot.Subsystems.LEDSubsystem;
+import frc.robot.Subsystems.LimelightSubsystem.LimelightOptions.LEDState;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -26,6 +31,7 @@ public class Robot extends TimedRobot {
    */
 
   RobotContainer robot;
+  AddressableLEDBuffer ledBuffer;
   
   @Override
   public void robotInit() {
@@ -40,7 +46,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    robot.intakeSubsystem.setSetpoint(Math.toRadians(90));
+    robot.resetTimers();
     robot.getAutonomousCommand().schedule();
   }
 
@@ -52,7 +58,9 @@ public class Robot extends TimedRobot {
     if(!robot.getConfigured()) {
       robot.teleOpInit();
     }
-    robot.intakeSubsystem.setSetpoint(Math.toRadians(90));
+    robot.resetTimers();
+    robot.intakeSubsystem.isAuto = false;
+    robot.limeLightSubsystem.setLedMode(LEDState.OFF);
   }
 
   @Override

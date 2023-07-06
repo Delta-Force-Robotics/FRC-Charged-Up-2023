@@ -30,6 +30,7 @@ import frc.robot.Constants.Constants.IntakeConstants;
 import frc.robot.Constants.Constants.OIConstants;
 import frc.robot.Subsystems.ElevatorSubsystem;
 import frc.robot.Subsystems.IntakeSubsystem;
+import frc.robot.Subsystems.LEDSubsystem;
 import frc.robot.Subsystems.LimelightSubsystem;
 import frc.robot.Subsystems.SwerveSubsystem;
 import frc.robot.Subsystems.ElevatorSubsystem.ElevatorPosition;
@@ -42,19 +43,20 @@ import frc.robot.Subsystems.LimelightSubsystem.LimelightOptions.LEDState;
 public class RobotContainer {
 
     private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
-    private final LimelightSubsystem limeLightSubsystem = new LimelightSubsystem("tx", "ty", "ta");
+    public final LimelightSubsystem limeLightSubsystem = new LimelightSubsystem("tx", "ty", "ta");
     public final ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
     public final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
     private final Joystick driverJoystick = new Joystick(OIConstants.kDriverControllerPort);
     private final Joystick driver2Joystick = new Joystick(OIConstants.kDriver2ControllerPort);
     private boolean configured = false;
+    private final LEDSubsystem ledSubsystem = new LEDSubsystem();
 
     private final SendableChooser autoStartSideChooser = new SendableChooser<String>();
     private final SendableChooser autoRoutineChooser = new SendableChooser<String>();
 
     public RobotContainer() {
-        autoStartSideChooser.addOption("Blue", "BlueSide");
-        autoStartSideChooser.addOption("Red", "RedSide");
+        autoStartSideChooser.addOption("Red", "BlueSide");
+        autoStartSideChooser.addOption("Blue", "RedSide");
 
         autoRoutineChooser.addOption("Mid", "AutoMid");
         autoRoutineChooser.addOption("Cable Cover", "AutoCableCover");
@@ -62,8 +64,8 @@ public class RobotContainer {
 
         SmartDashboard.putData(autoStartSideChooser);
         SmartDashboard.putData(autoRoutineChooser);
-        SmartDashboard.putBoolean("isHome", Constants.ElevatorConstants.isHome);
-        SmartDashboard.putBoolean("isScore", Constants.ElevatorConstants.isScore);
+        //SmartDashboard.putBoolean("isHome", ElevatorSubsystem.isHome);
+        //SmartDashboard.putBoolean("isScore", ElevatorSubsystem.isScore);
     }
 
     public void teleOpInit() {
@@ -73,7 +75,7 @@ public class RobotContainer {
                 () -> driverJoystick.getRawAxis(OIConstants.kDriverRotAxis),
                 () -> DriveConstants.kFieldCentric));
 
-        elevatorSubsystem.setDefaultCommand(new AutoRetractCommand(intakeSubsystem, elevatorSubsystem));
+        //elevatorSubsystem.setDefaultCommand(new AutoRetractCommand(intakeSubsystem, elevatorSubsystem, ledSubsystem));
 
         configureButtonBindings();
     }
@@ -81,59 +83,71 @@ public class RobotContainer {
     private void configureButtonBindings() {
         configured = true;
 
-        /*new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
-            //elevatorSubsystem.setSetpoint(0.046);
-            //intakeSubsystem.setSetpoint(Math.toRadians(-128));
-            intakeSubsystem.setSetpoint(Math.toRadians(75));
-            //intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
-        }, intakeSubsystem));
-
-        new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
-            //elevatorSubsystem.setSetpoint(0);
-            intakeSubsystem.setSetpoint(Math.toRadians(15));
-            //intakeSubsystem.currWheelDirection = WheelDirection.OFF;
-        }, intakeSubsystem));*/
-
         new JoystickButton(driverJoystick, 6).onTrue(Commands.runOnce(() -> {
-            if(Constants.ElevatorConstants.isHome || !Constants.ElevatorConstants.isScore) {
+            elevatorSubsystem.removeDefaultCommand();
+            if(ElevatorSubsystem.isHome || !ElevatorSubsystem.isScore) {
+                DriveConstants.slowMode = true;
                 elevatorSubsystem.setSetpoint(getPositionToScore()[0]);
-
+                
+                if(elevatorSubsystem.getDesiredElevatorPosition() !=  ElevatorSubsystem.ElevatorPosition.MID) {
                 new Thread(() -> {
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(450);
                         intakeSubsystem.setSetpoint(getPositionToScore()[1]); 
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }).start();
-
-                if(intakeSubsystem.currWheelDirection != WheelDirection.OFF) {
-                    if (intakeSubsystem.getCurrGameElement() == GameElement.CUBE) {
-                        intakeSubsystem.currWheelDirection = WheelDirection.OUTTAKE;
-                    } else {
-                        intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
+            } else {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(350);
+                        intakeSubsystem.setSetpoint(getPositionToScore()[1]); 
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                }
+                }).start();
+            }
 
-                Constants.ElevatorConstants.isHome = false;
-                Constants.ElevatorConstants.isScore = true;
+                ElevatorSubsystem.isHome = false;
+                ElevatorSubsystem.isScore = true;
             }
             else {
-                elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
-                intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
+                new Thread(() -> {
+                    try {
+                        if(intakeSubsystem.getCurrGameElement() == IntakeSubsystem.GameElement.CONE) {
+                    intakeSubsystem.setWheelDirection(WheelDirection.INTAKE);
+                }
+                else {
+                    intakeSubsystem.setWheelDirection(WheelDirection.OUTTAKE);
+                }
 
-                intakeSubsystem.currWheelDirection = WheelDirection.OFF;
+                        intakeSubsystem.updateWheelPower();
 
-                Constants.ElevatorConstants.isHome = true;
-                Constants.ElevatorConstants.isScore = false;
+                        Thread.sleep(500);
+
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
+                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
+
+                        intakeSubsystem.setWheelDirection(WheelDirection.OFF);
+
+                        DriveConstants.slowMode = false;
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                ElevatorSubsystem.isHome = true;
+                ElevatorSubsystem.isScore = false;
             }
         },elevatorSubsystem, intakeSubsystem));
 
         new JoystickButton(driverJoystick, 5).onTrue(Commands.runOnce(() -> {
-            if(Constants.ElevatorConstants.isHome) {
+            if(ElevatorSubsystem.isHome) {
+            elevatorSubsystem.setDefaultCommand(new AutoRetractCommand(intakeSubsystem, elevatorSubsystem, ledSubsystem));
             elevatorSubsystem.setSetpoint(getPositionToIntake()[0]);
 
-            if (elevatorSubsystem.getDesiredIntakeGameElement() != ElevatorSubsystem.IntakeGameElement.CONE_SUBSTATION) {
+            if (elevatorSubsystem.getDesiredIntakeGameElement() != ElevatorSubsystem.IntakeGameElement.CONE_SUBSTATION && elevatorSubsystem.getDesiredIntakeGameElement() != ElevatorSubsystem.IntakeGameElement.GROUND_CONE_TIPPED) {
                 new Thread(() -> {
                     try {
                         Thread.sleep(350);
@@ -142,27 +156,39 @@ public class RobotContainer {
                         e.printStackTrace();
                     }
                 }).start();
-            } else {
+            } else if(elevatorSubsystem.getDesiredIntakeGameElement() == ElevatorSubsystem.IntakeGameElement.GROUND_CONE_TIPPED) {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(200);
+                        intakeSubsystem.setSetpoint(getPositionToIntake()[1]); 
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+            }
+            else {
                 intakeSubsystem.setSetpoint(getPositionToIntake()[1]);
             }
 
             if (intakeSubsystem.getCurrGameElement() == GameElement.CUBE) {
-                intakeSubsystem.currWheelDirection = WheelDirection.OUTTAKE;
+                intakeSubsystem.setWheelDirection(WheelDirection.INTAKE);
             } else {
-                intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
+                intakeSubsystem.setWheelDirection(WheelDirection.OUTTAKE);
             }
             
-            Constants.ElevatorConstants.isHome = false;
-            Constants.ElevatorConstants.isScore = true;
+            ElevatorSubsystem.isHome = false;
+            ElevatorSubsystem.isScore = false;
             }
             else {
                 elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
                 intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
 
-                intakeSubsystem.currWheelDirection = WheelDirection.OFF;
+                intakeSubsystem.setWheelDirection(WheelDirection.OFF);
 
-                Constants.ElevatorConstants.isHome = true;
-                Constants.ElevatorConstants.isScore = false;
+                DriveConstants.slowMode = false;
+
+                ElevatorSubsystem.isHome = true;
+                ElevatorSubsystem.isScore = false;
             }
         }, elevatorSubsystem, intakeSubsystem));
 
@@ -193,21 +219,29 @@ public class RobotContainer {
         new POVButton(driver2Joystick, 0).onTrue(Commands.runOnce(() -> {
             elevatorSubsystem.setDesiredIntakeGameElement(ElevatorSubsystem.IntakeGameElement.GROUND_CONE_UP);
             intakeSubsystem.setCurrGameElement(IntakeSubsystem.GameElement.CONE);
+            ledSubsystem.setColor(LEDSubsystem.Colors.ORANGE.r, LEDSubsystem.Colors.ORANGE.g, LEDSubsystem.Colors.ORANGE.b);
+            ledSubsystem.setLEDColour(LEDSubsystem.Colors.ORANGE);
         }, elevatorSubsystem, intakeSubsystem));
 
         new POVButton(driver2Joystick, 90).onTrue(Commands.runOnce(() -> {
             elevatorSubsystem.setDesiredIntakeGameElement(ElevatorSubsystem.IntakeGameElement.CONE_SUBSTATION);
             intakeSubsystem.setCurrGameElement(IntakeSubsystem.GameElement.CONE);
+            ledSubsystem.setColor(LEDSubsystem.Colors.ORANGE.r, LEDSubsystem.Colors.ORANGE.g, LEDSubsystem.Colors.ORANGE.b);
+            ledSubsystem.setLEDColour(LEDSubsystem.Colors.ORANGE);
         }, elevatorSubsystem, intakeSubsystem));
 
         new POVButton(driver2Joystick, 180).onTrue(Commands.runOnce(() -> {
             elevatorSubsystem.setDesiredIntakeGameElement(ElevatorSubsystem.IntakeGameElement.GROUND_CONE_TIPPED);
             intakeSubsystem.setCurrGameElement(IntakeSubsystem.GameElement.CONE);
+            ledSubsystem.setColor(LEDSubsystem.Colors.ORANGE.r, LEDSubsystem.Colors.ORANGE.g, LEDSubsystem.Colors.ORANGE.b);
+            ledSubsystem.setLEDColour(LEDSubsystem.Colors.ORANGE);
         }, elevatorSubsystem, intakeSubsystem));
 
         new POVButton(driver2Joystick, 270).onTrue(Commands.runOnce(() -> {
             elevatorSubsystem.setDesiredIntakeGameElement(ElevatorSubsystem.IntakeGameElement.GROUND_CUBE);
             intakeSubsystem.setCurrGameElement(IntakeSubsystem.GameElement.CUBE);
+            ledSubsystem.setColor(LEDSubsystem.Colors.PURPLE.r, LEDSubsystem.Colors.PURPLE.g, LEDSubsystem.Colors.PURPLE.b);
+            ledSubsystem.setLEDColour(LEDSubsystem.Colors.PURPLE);
         }, elevatorSubsystem, intakeSubsystem)); 
 
         new JoystickButton(driverJoystick, 1)
@@ -236,6 +270,15 @@ public class RobotContainer {
                 limeLightSubsystem.setLedMode(LEDState.PIPELINE);
             }
         }, limeLightSubsystem));
+
+        new JoystickButton(driver2Joystick, 10).onTrue(Commands.runOnce(() -> {
+            swerveSubsystem.resetEncoders();
+        }, swerveSubsystem));
+    }
+
+    public void resetTimers() {
+        intakeSubsystem.resetTimer();
+        elevatorSubsystem.resetTimer();
     }
 
     public double[] getPositionToScore() {
@@ -264,7 +307,7 @@ public class RobotContainer {
 
     public double[] getPositionToIntake() {
         if(elevatorSubsystem.getDesiredIntakeGameElement() == ElevatorSubsystem.IntakeGameElement.GROUND_CONE_UP) {
-            return new double[] {ElevatorConstants.kElevatorPosIntakeConeUp, IntakeConstants.kPivotAngleRadIntakeConeUp};
+            return new double[] {ElevatorConstants.kElevatorPosIntakeConeDoubleSubstation, IntakeConstants.kPivotAngleRadIntakeConeDoubleSubstaion};
         }
         else if(elevatorSubsystem.getDesiredIntakeGameElement() == ElevatorSubsystem.IntakeGameElement.GROUND_CONE_TIPPED) {
             return new double[] {ElevatorConstants.kElevatorPosIntakeConeTipped, IntakeConstants.kPivotAngleRadIntakeConeTipped};
@@ -277,6 +320,8 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand() {
+        intakeSubsystem.isAuto = true;
+        limeLightSubsystem.setLedMode(LEDState.ON);
         intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
 
@@ -284,32 +329,39 @@ public class RobotContainer {
 
         if(autoStartSideChooser.getSelected() == "BlueSide") {
             if(autoRoutineChooser.getSelected() == "AutoOpen") {
-                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Blue 1+1 Open Exit", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Blue 1+1 Open Score", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Blue 1+1 Open Park", new PathConstraints(3.0, 3.0));
+                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Blue 1+1 Open Exit Copy", new PathConstraints(2.0, 1.0));
+                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Blue 1+1 Open Score 2", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Blue 1+1 Open Park 3", new PathConstraints(3.0, 3.0));
 
                 Command traj1 = swerveSubsystem.followTrajectoryCommand(ExitTrajectory, true);
                 Command traj2 = swerveSubsystem.followTrajectoryCommand(ScoreTrajectory, false);
                 Command traj3 = swerveSubsystem.followTrajectoryCommand(ParkTrajectory, false);
 
                 return new SequentialCommandGroup(
-                    new SequentialCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
-
+                    new SequentialCommandGroup(Commands.runOnce(() -> { 
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
+                        
                         double zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.53) {
+                            elevatorSubsystem.periodic();
+                            intakeSubsystem.periodic();
+                        }
+
+                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreConeHigh);
+
+                        zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 1.2) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
                     
                         intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
                         zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
-                            elevatorSubsystem.periodic();
-                            intakeSubsystem.periodic();
-                        }
+                        intakeSubsystem.periodic();
+
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.7) ;
+
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OFF);
                         
@@ -317,27 +369,31 @@ public class RobotContainer {
                     new ParallelCommandGroup(Commands.runOnce(() -> {
                         new Thread(() -> {
                             try {
-                                Thread.sleep(350);
+                                Thread.sleep(400);
                                 elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                         }).start();
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadIntakeCubeGround);
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
+                        intakeSubsystem.setSetpoint(Math.toRadians(0));
 
                     }, intakeSubsystem),traj1),
                     new ParallelCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeMid);
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
                         intakeSubsystem.setRampRate(0);
 
                     },intakeSubsystem, elevatorSubsystem), traj2),
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
                     new SequentialCommandGroup(Commands.runOnce(() -> {
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
                         double zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.3) {
+                            intakeSubsystem.periodic();
+                        }
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                        zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 0.5) {
                             intakeSubsystem.periodic();
                         }
@@ -349,16 +405,19 @@ public class RobotContainer {
                         
                     }, intakeSubsystem,elevatorSubsystem)),
                     traj3,
-                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem) 
+                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
             else if(autoRoutineChooser.getSelected() == "AutoMid") {
-                PathPlannerTrajectory parkTrajectory = PathPlanner.loadPath("Blue 1+Park", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory exitComunityTraj = PathPlanner.loadPath("Blue 1+1 Open Park", new PathConstraints(2, 2));
+                PathPlannerTrajectory parkTraj = PathPlanner.loadPath("Blue 1+1 CableCover Park", new PathConstraints(2, 2));
 
-                Command parkTraj = swerveSubsystem.followTrajectoryCommand(parkTrajectory, true);
+                Command exitComTraj = swerveSubsystem.followTrajectoryCommand(exitComunityTraj, true);
+                Command parkTrajectory = swerveSubsystem.followTrajectoryCommand(parkTraj, false);
 
                 return new SequentialCommandGroup(new SequentialCommandGroup(
                     Commands.runOnce(() -> {
+                        intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.INTAKE);
                         elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
 
@@ -368,7 +427,7 @@ public class RobotContainer {
                             intakeSubsystem.periodic();
                         }
                         
-                        intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.INTAKE);
+                        intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
 
                         zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
@@ -380,28 +439,36 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
                     }, elevatorSubsystem, intakeSubsystem),
-                    parkTraj
+                    exitComTraj, parkTrajectory
                 ),
                 parkCommand,
                 Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
             else {
-                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Blue 1+1 CableCover Exit", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Blue 1+1 CableCover Score", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Blue 1+1 CableCover Park", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Blue 1+1 CableCover Exit Cone 1", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Blue 1+1 CableCover Score Cone", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Blue 1+1 CableCover Park Cone", new PathConstraints(3.0, 3.0));
 
                 Command traj1 = swerveSubsystem.followTrajectoryCommand(ExitTrajectory, true);
                 Command traj2 = swerveSubsystem.followTrajectoryCommand(ScoreTrajectory, false);
                 Command traj3 = swerveSubsystem.followTrajectoryCommand(ParkTrajectory, false);
-
+                
                 return new SequentialCommandGroup(
-                    new SequentialCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
+                new SequentialCommandGroup(Commands.runOnce(() -> {
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
 
                         double zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.53) {
+                            elevatorSubsystem.periodic();
+                            intakeSubsystem.periodic();
+                        }
+
+                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreConeHigh);
+
+                        zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 1.2) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
@@ -409,7 +476,7 @@ public class RobotContainer {
                         intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
 
                         zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.7) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
@@ -426,21 +493,25 @@ public class RobotContainer {
                                 e.printStackTrace();
                             }
                         }).start();
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadIntakeCubeGround);
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
+                        intakeSubsystem.setSetpoint(Math.toRadians(-1));
 
                     }, intakeSubsystem),traj1),
                     new ParallelCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeMid);
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
                         intakeSubsystem.setRampRate(0);
 
                     },intakeSubsystem, elevatorSubsystem), traj2),
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
                     new SequentialCommandGroup(Commands.runOnce(() -> {
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
                         double zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.3) {
+                            intakeSubsystem.periodic();
+                        }
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                        zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 0.5) {
                             intakeSubsystem.periodic();
                         }
@@ -459,9 +530,9 @@ public class RobotContainer {
         else {
             if(autoRoutineChooser.getSelected() == "AutoOpen") {
 
-              /*PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Red 1+1 Open Exit Cone Copy", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Red 1+1 Open Score Cone Copy", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Red 1+1 Open Park Cone 1", new PathConstraints(4.0, 4.0));
+              PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Red 1+1 Open Exit Cone Copy Copy", new PathConstraints(2.0, 1.0));
+                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Red 1+1 Open Score Cone Copy Copy", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Red 1+1 Open Park Cone 1 Copy Copy", new PathConstraints(4.0, 4.0));
 
                 Command traj1 = swerveSubsystem.followTrajectoryCommand(ExitTrajectory, true);
                 Command traj2 = swerveSubsystem.followTrajectoryCommand(ScoreTrajectory, false);
@@ -469,28 +540,29 @@ public class RobotContainer {
 
                 return new SequentialCommandGroup(
                     new SequentialCommandGroup(Commands.runOnce(() -> { 
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
                         elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
                         
                         double zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 0.4) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.55) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
+
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreConeHigh);
 
                         zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 1.2) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
                     
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
-
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
                         zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
-                            elevatorSubsystem.periodic();
-                            intakeSubsystem.periodic();
-                        }
+                        intakeSubsystem.periodic();
+
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.7) ;
+
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OFF);
                         
@@ -498,14 +570,14 @@ public class RobotContainer {
                     new ParallelCommandGroup(Commands.runOnce(() -> {
                         new Thread(() -> {
                             try {
-                                Thread.sleep(350);
+                                Thread.sleep(400);
                                 elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                         }).start();
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadIntakeCubeGround);
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
+                        intakeSubsystem.setSetpoint(Math.toRadians(0));
 
                     }, intakeSubsystem),traj1),
                     new ParallelCommandGroup(Commands.runOnce(() -> {
@@ -516,9 +588,13 @@ public class RobotContainer {
                     },intakeSubsystem, elevatorSubsystem), traj2),
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
                     new SequentialCommandGroup(Commands.runOnce(() -> {
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
                         double zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.3) {
+                            intakeSubsystem.periodic();
+                        }
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                        zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 0.5) {
                             intakeSubsystem.periodic();
                         }
@@ -530,84 +606,19 @@ public class RobotContainer {
                         
                     }, intakeSubsystem,elevatorSubsystem)),
                     traj3,
-                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem) 
-                );*/
-
-                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Red 1+1 Open Exit", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Red 1+1 Open Score", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Red 1+1 Open Park", new PathConstraints(4.0, 4.0));
-
-                Command traj1 = swerveSubsystem.followTrajectoryCommand(ExitTrajectory, true);
-                Command traj2 = swerveSubsystem.followTrajectoryCommand(ScoreTrajectory, false);
-                Command traj3 = swerveSubsystem.followTrajectoryCommand(ParkTrajectory, false);
-
-                return new SequentialCommandGroup(
-                    new SequentialCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
-
-                        double zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
-                            elevatorSubsystem.periodic();
-                            intakeSubsystem.periodic();
-                        }
-                    
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
-                        zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
-                            elevatorSubsystem.periodic();
-                            intakeSubsystem.periodic();
-                        }
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OFF);
-                        
-                    }, elevatorSubsystem, intakeSubsystem)), 
-                    new ParallelCommandGroup(Commands.runOnce(() -> {
-                        new Thread(() -> {
-                            try {
-                                Thread.sleep(350);
-                                elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }).start();
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadIntakeCubeGround);
-
-                    }, intakeSubsystem),traj1),
-                    new ParallelCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeMid);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
-                        intakeSubsystem.setRampRate(0);
-
-                    },intakeSubsystem, elevatorSubsystem), traj2),
-                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
-                    new SequentialCommandGroup(Commands.runOnce(() -> {
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
-                        double zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 0.5) {
-                            intakeSubsystem.periodic();
-                        }
-
-                        intakeSubsystem.setRampRate(0.5);
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OFF);
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosHome);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
-                        
-                    }, intakeSubsystem,elevatorSubsystem)),
-                    traj3,
-                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem) 
+                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
             else if(autoRoutineChooser.getSelected() == "AutoMid") {
-                PathPlannerTrajectory parkTrajectory = PathPlanner.loadPath("Red 1+Park", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory exitComunityTraj = PathPlanner.loadPath("Blue 1+1 Open Park", new PathConstraints(2, 2));
+                PathPlannerTrajectory parkTraj = PathPlanner.loadPath("Blue 1+1 CableCover Park", new PathConstraints(2, 2));
 
-                Command parkTraj = swerveSubsystem.followTrajectoryCommand(parkTrajectory, true);
+                Command exitComTraj = swerveSubsystem.followTrajectoryCommand(exitComunityTraj, true);
+                Command parkTrajectory = swerveSubsystem.followTrajectoryCommand(parkTraj, false);
 
                 return new SequentialCommandGroup(new SequentialCommandGroup(
                     Commands.runOnce(() -> {
+                        intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.INTAKE);
                         elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
 
@@ -617,7 +628,7 @@ public class RobotContainer {
                             intakeSubsystem.periodic();
                         }
                         
-                        intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.INTAKE);
+                        intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
 
                         zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
@@ -629,28 +640,36 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
                     }, elevatorSubsystem, intakeSubsystem),
-                    parkTraj
+                    exitComTraj, parkTrajectory
                 ),
                 parkCommand,
                 Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
             else {
-                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Red 1+1 CableCover Exit", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Red 1+1 CableCover Score", new PathConstraints(2.0, 2.0));
-                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Red 1+1 CableCover Park", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ExitTrajectory = PathPlanner.loadPath("Red 1+1 CableCover Exit Cone 2 Copy", new PathConstraints(2.0, 1.0));
+                PathPlannerTrajectory ScoreTrajectory = PathPlanner.loadPath("Red 1+1 CableCover Score Cone 4", new PathConstraints(2.0, 2.0));
+                PathPlannerTrajectory ParkTrajectory = PathPlanner.loadPath("Red 1+1 CableCover Park Cone 4", new PathConstraints(3.0, 3.0));
 
                 Command traj1 = swerveSubsystem.followTrajectoryCommand(ExitTrajectory, true);
                 Command traj2 = swerveSubsystem.followTrajectoryCommand(ScoreTrajectory, false);
                 Command traj3 = swerveSubsystem.followTrajectoryCommand(ParkTrajectory, false);
 
                 return new SequentialCommandGroup(
-                    new SequentialCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
+                new SequentialCommandGroup(Commands.runOnce(() -> {
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosConeHigh);
 
                         double zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.53) {
+                            elevatorSubsystem.periodic();
+                            intakeSubsystem.periodic();
+                        }
+
+                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreConeHigh);
+
+                        zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 1.2) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
@@ -658,7 +677,7 @@ public class RobotContainer {
                         intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
 
                         zeroTime = Timer.getFPGATimestamp();
-                        while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.7) {
                             elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
                         }
@@ -675,21 +694,25 @@ public class RobotContainer {
                                 e.printStackTrace();
                             }
                         }).start();
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
-                        intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadIntakeCubeGround);
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
+                        intakeSubsystem.setSetpoint(Math.toRadians(IntakeConstants.kPivotAngleRadIntakeCubeGround));
 
                     }, intakeSubsystem),traj1),
                     new ParallelCommandGroup(Commands.runOnce(() -> {
-                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeMid);
+                        elevatorSubsystem.setSetpoint(ElevatorConstants.kElevatorPosCubeHigh);
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadScoreCube);
                         intakeSubsystem.setRampRate(0);
 
                     },intakeSubsystem, elevatorSubsystem), traj2),
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
                     new SequentialCommandGroup(Commands.runOnce(() -> {
-                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.INTAKE);
-
                         double zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 0.3) {
+                            intakeSubsystem.periodic();
+                        }
+                        intakeSubsystem.setWheelDirection(IntakeSubsystem.WheelDirection.OUTTAKE);
+
+                        zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 0.5) {
                             intakeSubsystem.periodic();
                         }
@@ -701,7 +724,7 @@ public class RobotContainer {
                         
                     }, intakeSubsystem,elevatorSubsystem)),
                     traj3,
-                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem) 
+                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
         }

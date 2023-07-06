@@ -25,7 +25,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private RelativeEncoder pivotEncoder = pivotMotor.getEncoder();
     private PIDController pivotFeedBack = new PIDController(IntakeConstants.kP, IntakeConstants.kI, IntakeConstants.kD);
     private ArmFeedforward pivotFeedForward = new ArmFeedforward(IntakeConstants.kS, IntakeConstants.kCos, IntakeConstants.kV, IntakeConstants.kA);
-    private AbsoluteEncoder absoluteEncoderPivot = pivotMotor.getAbsoluteEncoder(Type.kDutyCycle); 
+    private AbsoluteEncoder absoluteEncoderPivot = pivotMotor.getAbsoluteEncoder(Type.kDutyCycle);
 
     private BooleanSupplier isInterrupted;
 
@@ -37,6 +37,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public WheelDirection currWheelDirection = WheelDirection.OFF;
     private GameElement currGameElement = GameElement.CONE;
+    public boolean isAuto = false;
 
     public IntakeSubsystem() {
         pivotMotor.setInverted(true); 
@@ -77,7 +78,7 @@ public class IntakeSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("setpoint", setPoint);
         SmartDashboard.putNumber("veloc?", pivotEncoder.getVelocity());
         SmartDashboard.putNumber("pos?", pivotEncoder.getPosition());*/
-
+        //SmartDashboard.putBoolean("isAuto", isAuto);
         updateWheelPower();
         refreshControlLoop();
 
@@ -89,14 +90,18 @@ public class IntakeSubsystem extends SubsystemBase {
         double velocity = motState.velocity;
         double accel = (velocity - lastVel) / (Timer.getFPGATimestamp() - lastVelTime);
 
-        SmartDashboard.putNumber("pos", motState.position);
+        /*SmartDashboard.putNumber("pos", motState.position);
         SmartDashboard.putNumber("velocity", velocity);
-        SmartDashboard.putNumber("1", motionProfile.totalTime());
+        SmartDashboard.putNumber("1", motionProfile.totalTime());*/
 
         pivotMotor.setVoltage(pivotFeedBack.calculate(pivotEncoder.getPosition(), motState.position) + pivotFeedForward.calculate(pivotEncoder.getPosition(), velocity, accel));
 
         lastVel = velocity;
         lastVelTime = Timer.getFPGATimestamp();
+    }
+
+    public void resetTimer() {
+        motionStartTime = Timer.getFPGATimestamp();
     }
     
     public void setPivotPower(double pivotPower) {
@@ -108,14 +113,28 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void updateWheelPower() {
-        double wheelPower = 0;
-
+        double wheelPower;
+        if(currGameElement == GameElement.CONE) {
+            wheelPower = -0.2;
+        }
+        else {
+            wheelPower = 0.2;
+        }
+        if(!isAuto) {
         if(currWheelDirection == WheelDirection.INTAKE) {
-            wheelPower = 0.5;
+            wheelPower = 0.7;
         }
         else if(currWheelDirection == WheelDirection.OUTTAKE) {
             wheelPower = -0.5;
         }
+    } else {
+        if(currWheelDirection == WheelDirection.INTAKE) {
+            wheelPower = 0.7;
+        }
+        else if(currWheelDirection == WheelDirection.OUTTAKE) {
+            wheelPower = -0.25;
+        }
+    }
 
         wheelMotor.set(wheelPower);
     }
