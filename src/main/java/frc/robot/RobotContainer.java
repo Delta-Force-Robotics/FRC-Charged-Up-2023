@@ -4,6 +4,7 @@ import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.AddressableLED;
@@ -74,6 +75,8 @@ public class RobotContainer {
                 () -> driverJoystick.getRawAxis(OIConstants.kDriverXAxis),
                 () -> driverJoystick.getRawAxis(OIConstants.kDriverRotAxis),
                 () -> DriveConstants.kFieldCentric));
+
+        swerveSubsystem.setDriveMotorsIdleMode(IdleMode.kBrake);
 
         //elevatorSubsystem.setDefaultCommand(new AutoRetractCommand(intakeSubsystem, elevatorSubsystem, ledSubsystem));
 
@@ -404,11 +407,13 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         
                     }, intakeSubsystem,elevatorSubsystem)),
+                    Commands.runOnce(() -> swerveSubsystem.setDriveMotorsIdleMode(IdleMode.kCoast)),
                     traj3,
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
             else if(autoRoutineChooser.getSelected() == "AutoMid") {
+                intakeSubsystem.setCurrGameElement(GameElement.CUBE);
                 PathPlannerTrajectory exitComunityTraj = PathPlanner.loadPath("Blue 1+1 Open Park", new PathConstraints(2, 2));
                 PathPlannerTrajectory parkTraj = PathPlanner.loadPath("Blue 1+1 CableCover Park", new PathConstraints(2, 2));
 
@@ -423,8 +428,8 @@ public class RobotContainer {
 
                         double zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
-                            elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
+                            elevatorSubsystem.periodic();
                         }
                         
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
@@ -439,7 +444,8 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
                     }, elevatorSubsystem, intakeSubsystem),
-                    exitComTraj, parkTrajectory
+                    exitComTraj, 
+                    parkTrajectory
                 ),
                 parkCommand,
                 Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
@@ -522,6 +528,7 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         
                     }, intakeSubsystem,elevatorSubsystem)),
+                    Commands.runOnce(() -> swerveSubsystem.setDriveMotorsIdleMode(IdleMode.kCoast)),
                     traj3,
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem) 
                 );
@@ -605,11 +612,13 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         
                     }, intakeSubsystem,elevatorSubsystem)),
+                    Commands.runOnce(() -> swerveSubsystem.setDriveMotorsIdleMode(IdleMode.kCoast)),
                     traj3,
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
             else if(autoRoutineChooser.getSelected() == "AutoMid") {
+                intakeSubsystem.setCurrGameElement(GameElement.CUBE);
                 PathPlannerTrajectory exitComunityTraj = PathPlanner.loadPath("Blue 1+1 Open Park", new PathConstraints(2, 2));
                 PathPlannerTrajectory parkTraj = PathPlanner.loadPath("Blue 1+1 CableCover Park", new PathConstraints(2, 2));
 
@@ -723,6 +732,7 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         
                     }, intakeSubsystem,elevatorSubsystem)),
+                    Commands.runOnce(() -> swerveSubsystem.setDriveMotorsIdleMode(IdleMode.kCoast)),
                     traj3,
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );

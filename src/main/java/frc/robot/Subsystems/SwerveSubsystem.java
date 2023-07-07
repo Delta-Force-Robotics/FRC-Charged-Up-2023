@@ -3,6 +3,7 @@ package frc.robot.Subsystems;
 import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.commands.PPSwerveControllerCommand;
+import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -11,6 +12,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -139,6 +141,8 @@ public class SwerveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("frontRight", frontRight  .getTurnPosition());
         SmartDashboard.putNumber("backLeft", backLeft    .getTurnPosition());
         SmartDashboard.putNumber("backRight", backRight   .getTurnPosition());
+        SmartDashboard.putNumber("backLeft Turn Current", backLeft.getTurnCurrent());
+        SmartDashboard.putNumber("battery voltage", RobotController.getBatteryVoltage());
     }
 
     public void stopModules() {
@@ -148,6 +152,13 @@ public class SwerveSubsystem extends SubsystemBase {
         backRight.stop();
     }
 
+    public void setDriveMotorsIdleMode(IdleMode idleMode) {
+        frontLeft.setDriveMotorIdleMode(idleMode);
+        frontRight.setDriveMotorIdleMode(idleMode);
+        backLeft.setDriveMotorIdleMode(idleMode);
+        backRight.setDriveMotorIdleMode(idleMode);
+    }
+    
     public void setModulesStates(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, DriveConstants.kPhysicalMaxSpeedMetersPerSecond);
 

@@ -5,6 +5,7 @@ import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.MagnetFieldStrength;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -34,13 +35,18 @@ public class SwerveModuleCoaxial {
 
     public SwerveModuleCoaxial (int driveMotorID, int turnMotorID, boolean absoluteEncoderReversed, double absoluteEncoderOffset, 
                 boolean driveMotorReversed, boolean turnMotorReversed, int absoluteEncoderID) {
-        
         this.absoluteEncoderReversed = absoluteEncoderReversed;
         this.absoluteEncoderOffsetRad = absoluteEncoderOffset;
         absoluteEncoder = new CANCoder(absoluteEncoderID);
         
         driveMotor = new CANSparkMax(driveMotorID, MotorType.kBrushless);
         turnMotor = new CANSparkMax(turnMotorID, MotorType.kBrushless);
+
+        turnMotor.setSmartCurrentLimit(40);
+        driveMotor.setSmartCurrentLimit(40);
+
+        turnMotor.setIdleMode(IdleMode.kBrake);
+        driveMotor.setIdleMode(IdleMode.kBrake);
 
         driveMotor.setInverted(driveMotorReversed);
         turnMotor.setInverted(turnMotorReversed);
@@ -61,6 +67,14 @@ public class SwerveModuleCoaxial {
         motorFeedforward = new SimpleMotorFeedforward(DriveConstants.kS, DriveConstants.kV, DriveConstants.kA);
         
         resetEncoders();
+    }
+
+    public double getTurnCurrent() {
+        return turnMotor.getOutputCurrent();
+    }
+
+    public void setDriveMotorIdleMode(IdleMode idleMode) {
+        driveMotor.setIdleMode(idleMode);
     }
 
     public double getDrivePosition () {
