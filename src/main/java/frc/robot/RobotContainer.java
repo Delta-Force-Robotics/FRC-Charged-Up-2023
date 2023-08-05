@@ -20,7 +20,9 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
+import frc.robot.Commands.AutoFollowingCommand;
 import frc.robot.Commands.AutoRetractCommand;
+import frc.robot.Commands.AutoTrackingCommand;
 import frc.robot.Commands.ElevatorManualControl;
 import frc.robot.Commands.ParkCommand;
 import frc.robot.Commands.SwerveJoystickCommand;
@@ -77,6 +79,8 @@ public class RobotContainer {
                 () -> DriveConstants.kFieldCentric));
 
         swerveSubsystem.setDriveMotorsIdleMode(IdleMode.kBrake);
+
+        //swerveSubsystem.setDefaultCommand(new AutoTrackingCommand(swerveSubsystem, limeLightSubsystem));
 
         //elevatorSubsystem.setDefaultCommand(new AutoRetractCommand(intakeSubsystem, elevatorSubsystem, ledSubsystem));
 
@@ -323,6 +327,13 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand() {
+
+       // AutoTrackingCommand autoTrackingCommand = new AutoTrackingCommand(swerveSubsystem, limeLightSubsystem);
+        AutoFollowingCommand autoFollowingCommand = new AutoFollowingCommand(swerveSubsystem, limeLightSubsystem);
+
+        return new SequentialCommandGroup(autoFollowingCommand);
+
+        /*
         intakeSubsystem.isAuto = true;
         limeLightSubsystem.setLedMode(LEDState.ON);
         intakeSubsystem.currWheelDirection = WheelDirection.INTAKE;
@@ -413,7 +424,6 @@ public class RobotContainer {
                 );
             }
             else if(autoRoutineChooser.getSelected() == "AutoMid") {
-                intakeSubsystem.setCurrGameElement(GameElement.CUBE);
                 PathPlannerTrajectory exitComunityTraj = PathPlanner.loadPath("Blue 1+1 Open Park", new PathConstraints(2, 2));
                 PathPlannerTrajectory parkTraj = PathPlanner.loadPath("Blue 1+1 CableCover Park", new PathConstraints(2, 2));
 
@@ -445,6 +455,17 @@ public class RobotContainer {
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
                     }, elevatorSubsystem, intakeSubsystem),
                     exitComTraj, 
+
+                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
+
+                    Commands.runOnce(() -> {
+                        double zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 2.0) {
+                            intakeSubsystem.periodic();
+                            elevatorSubsystem.periodic();
+                        }
+                    }),
+
                     parkTrajectory
                 ),
                 parkCommand,
@@ -633,8 +654,8 @@ public class RobotContainer {
 
                         double zeroTime = Timer.getFPGATimestamp();
                         while(Timer.getFPGATimestamp() - zeroTime <= 1.5) {
-                            elevatorSubsystem.periodic();
                             intakeSubsystem.periodic();
+                            elevatorSubsystem.periodic();
                         }
                         
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OUTTAKE);
@@ -649,7 +670,19 @@ public class RobotContainer {
                         intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
                         intakeSubsystem.setWheelDirection(frc.robot.Subsystems.IntakeSubsystem.WheelDirection.OFF);
                     }, elevatorSubsystem, intakeSubsystem),
-                    exitComTraj, parkTrajectory
+                    exitComTraj,
+
+                    Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem),
+
+                    Commands.runOnce(() -> {
+                        double zeroTime = Timer.getFPGATimestamp();
+                        while(Timer.getFPGATimestamp() - zeroTime <= 2.0) {
+                            intakeSubsystem.periodic();
+                            elevatorSubsystem.periodic();
+                        }
+                    }),
+
+                     parkTrajectory
                 ),
                 parkCommand,
                 Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
@@ -737,7 +770,11 @@ public class RobotContainer {
                     Commands.runOnce(() -> swerveSubsystem.stopModules(), swerveSubsystem)
                 );
             }
-        }
+        }*/
+    }
+
+    public String getAutoRoutine() {
+        return autoRoutineChooser.getSelected().toString();
     }
 
     public boolean getConfigured() {

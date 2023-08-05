@@ -120,21 +120,22 @@ public class IntakeSubsystem extends SubsystemBase {
         else {
             wheelPower = 0.2;
         }
+
         if(!isAuto) {
-        if(currWheelDirection == WheelDirection.INTAKE) {
-            wheelPower = 0.7;
+            if(currWheelDirection == WheelDirection.INTAKE) {
+                wheelPower = 0.7;
+            }
+            else if(currWheelDirection == WheelDirection.OUTTAKE) {
+                wheelPower = -0.5;
+            }
+        } else {
+            if(currWheelDirection == WheelDirection.INTAKE) {
+                wheelPower = 0.7;
+            }
+            else if(currWheelDirection == WheelDirection.OUTTAKE) {
+                wheelPower = -0.25;
+            }
         }
-        else if(currWheelDirection == WheelDirection.OUTTAKE) {
-            wheelPower = -0.5;
-        }
-    } else {
-        if(currWheelDirection == WheelDirection.INTAKE) {
-            wheelPower = 0.7;
-        }
-        else if(currWheelDirection == WheelDirection.OUTTAKE) {
-            wheelPower = -0.25;
-        }
-    }
 
         wheelMotor.set(wheelPower);
     }

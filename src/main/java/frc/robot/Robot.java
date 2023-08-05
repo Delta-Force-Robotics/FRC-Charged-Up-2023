@@ -58,6 +58,7 @@ public class Robot extends TimedRobot {
     if(!robot.getConfigured()) {
       robot.teleOpInit();
     }
+
     robot.resetTimers();
     robot.intakeSubsystem.isAuto = false;
     robot.limeLightSubsystem.setLedMode(LEDState.OFF);

@@ -39,9 +39,13 @@ public class LimelightSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        for(NetworkTableEntry entry : collectedEntries) {
+
+        SmartDashboard.putNumber("tx", getEntryAsDouble("tx"));
+        SmartDashboard.putNumber("ta", getEntryAsDouble("ta"));
+
+        /*for(NetworkTableEntry entry : collectedEntries) {
             SmartDashboard.putNumber(entry.getName(), entry.getDouble(0.0));
-        }
+        }*/
     }
 
     public void setPipeline(double pipelineIndex) {
@@ -82,6 +86,10 @@ public class LimelightSubsystem extends SubsystemBase {
 
     public NetworkTableEntry getNetworkTableEntry(String entry) {
         return limelightTable.getEntry(entry);
+    }
+
+    public double getEntryAsDouble(String entry) {
+        return limelightTable.getEntry(entry).getDouble(0.0);
     }
 
     public ArrayList<NetworkTableEntry> getCollectedEntries() {

@@ -24,7 +24,7 @@ public class AutoRetractCommand extends CommandBase {
 
     @Override
     public void execute() {
-        if(intakeSubsystem.getOutputCurrent() > 38 && lastCurrent <= 38) {
+        /*if(intakeSubsystem.getOutputCurrent() > 38 && lastCurrent <= 38) {
             intakeSubsystem.setSetpoint(IntakeConstants.kPivotAngleRadHome);
             elevatorSubsystem.setSetpoint(0);
             intakeSubsystem.setWheelDirection(WheelDirection.OFF);
@@ -32,9 +32,9 @@ public class AutoRetractCommand extends CommandBase {
             ElevatorSubsystem.isHome = true;
             ElevatorSubsystem.isScore = false;
             ledSubsystem.setIsElementInside(true);
-        }
+        }*/
 
-        lastCurrent = intakeSubsystem.getOutputCurrent();
+        //lastCurrent = intakeSubsystem.getOutputCurrent();
 
     } 
 }
