@@ -7,6 +7,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.Joystick;
@@ -42,6 +43,7 @@ import frc.robot.Subsystems.IntakeSubsystem.GameElement;
 import frc.robot.Subsystems.IntakeSubsystem.WheelDirection;
 import frc.robot.Subsystems.LimelightSubsystem.LimelightOptions.CamMode;
 import frc.robot.Subsystems.LimelightSubsystem.LimelightOptions.LEDState;
+import frc.robot.Util.VisionTarget;
 
 public class RobotContainer {
 
@@ -327,9 +329,14 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand() {
-
-       // AutoTrackingCommand autoTrackingCommand = new AutoTrackingCommand(swerveSubsystem, limeLightSubsystem);
-        AutoFollowingCommand autoFollowingCommand = new AutoFollowingCommand(swerveSubsystem, limeLightSubsystem);
+        AutoFollowingCommand autoFollowingCommand = new AutoFollowingCommand(
+            swerveSubsystem, 
+            limeLightSubsystem,
+            new PIDController(0, 0, 0),
+            new PIDController(0, 0, 0),
+            new PIDController(0, 0, 0),
+            new VisionTarget(0, 0)   
+        );
 
         return new SequentialCommandGroup(autoFollowingCommand);
 

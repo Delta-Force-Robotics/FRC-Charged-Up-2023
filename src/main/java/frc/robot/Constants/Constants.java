@@ -177,6 +177,11 @@ public static final class IntakeConstants {
         public static final double kIntakeMaxAccel = Math.toRadians(360);
     }
 
+    public static final class CameraConstants {
+        public static final double HORIZ_FOV = 63.3;
+        public static final double VERT_FOV = 49.7;
+        public static final double DIAG_FOV = Math.sqrt(HORIZ_FOV*HORIZ_FOV + VERT_FOV*VERT_FOV);
+    }
 
     public static final class CANConstants {                                                                                                                                                                              
         public static int kLeftElevatorMotor = 11;
