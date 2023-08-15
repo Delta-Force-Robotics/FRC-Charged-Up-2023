@@ -335,7 +335,7 @@ public class RobotContainer {
             new PIDController(0, 0, 0),
             new PIDController(0, 0, 0),
             new PIDController(0, 0, 0),
-            new VisionTarget(0, 0)   
+            new VisionTarget(0.13, 0.13)   
         );
 
         return new SequentialCommandGroup(autoFollowingCommand);
