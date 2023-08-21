@@ -332,11 +332,15 @@ public class RobotContainer {
         AutoFollowingCommand autoFollowingCommand = new AutoFollowingCommand(
             swerveSubsystem, 
             limeLightSubsystem,
-            new PIDController(0, 0, 0),
-            new PIDController(0, 0, 0),
-            new PIDController(0, 0, 0),
-            new VisionTarget(0.13, 0.13)   
+            new PIDController(5, 0, 0), //5
+            new PIDController(1, 0, 0), //1
+            new PIDController(0.7, 0, 0), //0.7
+            new VisionTarget(0.095, 0.095)   
         );
+
+        autoFollowingCommand.setControllerActive(true, true, true);
+
+        autoFollowingCommand.setControllerSetPoints(1, 0, Math.toRadians(0));
 
         return new SequentialCommandGroup(autoFollowingCommand);
 
