@@ -1,7 +1,7 @@
 # **FRC-Charged-Up-2023**
 Our repository for the 2023 FIRST Robotics Competition Season "Charged Up".
 
-[FRC_TRI](https://github.com/Delta-Force-Robotics/FRC-Charged-Up-2023/assets/115287980/dee0b88f-4816-44c3-80a9-d17d97d475b8)
+![](https://github.com/Delta-Force-Robotics/FRC-Charged-Up-2023/blob/main/FRC_TRI_Robot.gif)
 
 ## **HIGHLIGHTS** 
 
