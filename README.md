@@ -3,7 +3,7 @@ Our repository for the 2023 FIRST Robotics Competition Season "Charged Up".
 
 ![](https://github.com/Delta-Force-Robotics/FRC-Charged-Up-2023/blob/main/FRC_TRI_Robot.gif)
 
-## **HIGHLIGHTS** 
+## **Highlights** 
 
 * Field-Relative Swerve Drive
 * 2 Game Piece Autonomous Modes
@@ -11,7 +11,7 @@ Our repository for the 2023 FIRST Robotics Competition Season "Charged Up".
 * Automatic Elevator and Intake Retraction
 * April Tag Detection and Follower
 
-## **MAJOR PACKAGE FUNCTIONS**
+## **Major Package Functions**
 
 ### RobotContainer
 
